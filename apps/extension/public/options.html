@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Flowlog settings</title>
+	<link rel="stylesheet" href="options.css" />
+</head>
+<body>
+	<main>
+		<h1>Flowlog</h1>
+		<p class="subtitle">Connect this browser to your Flowlog account.</p>
+
+		<section>
+			<label for="server-url">Server URL</label>
+			<input id="server-url" type="url" placeholder="https://app.flowlog.example" />
+
+			<label for="device-token">Device token</label>
+			<input id="device-token" type="password" placeholder="Paste the token from Settings → Devices" />
+
+			<button id="save" type="button">Save</button>
+			<p id="status" role="status"></p>
+		</section>
+
+		<section>
+			<h2>Excluded domains</h2>
+			<p class="subtitle">Synced from your account. Manage the full list in the Flowlog web app.</p>
+			<ul id="excluded-domains"></ul>
+		</section>
+	</main>
+	<script type="module" src="options.js"></script>
+</body>
+</html>

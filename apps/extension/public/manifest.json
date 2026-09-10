@@ -1,0 +1,26 @@
+{
+	"manifest_version": 3,
+	"name": "Flowlog — Automatic Time Tracking",
+	"version": "0.1.0",
+	"description": "Adds browser tab context (domain, title) to your Flowlog timesheet. Pause any time from the toolbar icon.",
+	"icons": {
+		"16": "icons/icon-16.png",
+		"32": "icons/icon-32.png",
+		"48": "icons/icon-48.png",
+		"128": "icons/icon-128.png"
+	},
+	"permissions": ["tabs", "idle", "storage", "alarms"],
+	"host_permissions": ["http://localhost/*", "https://*/*"],
+	"background": {
+		"service_worker": "background.js",
+		"type": "module"
+	},
+	"action": {
+		"default_popup": "popup.html",
+		"default_icon": {
+			"16": "icons/icon-16.png",
+			"32": "icons/icon-32.png"
+		}
+	},
+	"options_page": "options.html"
+}

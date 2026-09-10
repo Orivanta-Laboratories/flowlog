@@ -1,0 +1,9 @@
+{
+	"extends": "@flowlog/config/tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"types": ["chrome"],
+		"noEmit": true
+	},
+	"include": ["src/**/*.ts"]
+}
