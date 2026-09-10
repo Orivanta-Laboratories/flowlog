@@ -20,9 +20,9 @@ import {
 import { MarketingCta } from "@/components/marketing-cta";
 
 const TRUST_POINTS = [
-	"Agent installs in a minute",
-	"Kept on your device by default",
-	"No manual timers",
+	"Installs in about a minute",
+	"Stays on your device",
+	"No timers, ever",
 ] as const;
 
 const WEEKLY_BARS = [22, 30, 26, 40, 34, 12, 8] as const;
@@ -51,27 +51,27 @@ const RECENT_ACTIVITY = [
 const FEATURES = [
 	{
 		icon: Timer,
-		title: "No input tracking",
+		title: "No timer to remember",
 		description:
-			"There is no timer to start or stop. Flowlog builds your timesheet from the apps, windows, and repos you already work in.",
+			"There's no start or stop button. Flowlog builds your timesheet from the apps, windows, and repos you're already working in.",
 	},
 	{
 		icon: GitBranch,
 		title: "Understands git",
 		description:
-			"Branch switches and commits are matched to the time you spent, no matter which editor or terminal you use.",
+			"Branch switches and commits get matched to the time you spent, no matter which editor or terminal you use.",
 	},
 	{
 		icon: Sparkles,
-		title: "Confirm, do not compose",
+		title: "Confirm, don't compose",
 		description:
-			"Every block ships with a suggested label and a confidence score. Accept the obvious ones, edit the rest, and never type a timesheet from scratch.",
+			"Every block ships with a suggested label and a confidence score. Accept the obvious ones, edit the rest — you never type a timesheet from scratch.",
 	},
 	{
 		icon: Lock,
 		title: "Private by default",
 		description:
-			"Window titles stay on your device unless you turn on AI labeling yourself. Nothing leaves your machine without your consent.",
+			"Window titles never leave your device unless you turn on AI labeling yourself.",
 	},
 ] as const;
 
@@ -111,19 +111,19 @@ const STEPS = [
 		number: "1",
 		title: "Install the agent",
 		description:
-			"One binary for desktop, one extension for the browser. Sign in once and tracking starts right away, with no timer to remember.",
+			"One binary for desktop, one extension for the browser. Sign in once and tracking starts right away — no timer to remember.",
 	},
 	{
 		number: "2",
 		title: "Let it run in the background",
 		description:
-			"Flowlog watches the app, window, and git branch you are already in. There is nothing to start, stop, or forget about during the day.",
+			"Flowlog watches the app, window, and git branch you're already in. There's nothing to start, stop, or forget about during the day.",
 	},
 	{
 		number: "3",
 		title: "Confirm your day",
 		description:
-			"At the end of the day, review a suggested timesheet with labels and confidence scores already filled in. Accept what is right and edit the rest.",
+			"At the end of the day, review a suggested timesheet with labels and confidence scores already filled in. Accept what's right, edit the rest.",
 	},
 ] as const;
 
@@ -151,17 +151,17 @@ const FAQS = [
 	{
 		question: "Do I need to keep a tab or window open?",
 		answer:
-			"No. The desktop agent runs as a background service and the extension runs in a browser service worker, so tracking continues without anything pinned open.",
+			"No. The desktop agent runs as a background service and the extension runs in a browser service worker, so tracking keeps going without anything pinned open.",
 	},
 	{
 		question: "What if I forget to pause it?",
 		answer:
-			"Pause tracking any time from the browser toolbar popup or the desktop tray icon. Paused time is never queued or sent.",
+			"Pause tracking any time from the browser toolbar popup or the desktop tray icon. Paused time is never queued or sent, so there's nothing to clean up after.",
 	},
 	{
 		question: "What happens if my connection drops?",
 		answer:
-			"Events queue to disk until they are delivered successfully, so a flaky connection does not lose a block of your day.",
+			"Events queue to disk until they're delivered successfully, so a flaky connection doesn't cost you a block of your day.",
 	},
 ] as const;
 
@@ -172,14 +172,14 @@ export default function Home() {
 				<div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
 					<div>
 						<Badge variant="secondary" className="mb-5 rounded-full">
-							One agent, every source
+							Built for people who forget to start timers
 						</Badge>
 						<h1 className="mb-5 max-w-2xl text-balance font-semibold text-5xl tracking-tight sm:text-6xl">
 							The timesheet that fills itself in
 						</h1>
 						<p className="mb-8 max-w-lg text-pretty text-lg text-muted-foreground">
-							Flowlog watches the app, window, and git branch you are already
-							in, turns it into a suggested timesheet at the end of the day, and
+							Flowlog watches the app, window, and git branch you're already in,
+							turns it into a suggested timesheet at the end of the day, and
 							asks &ldquo;is this right?&rdquo; instead of &ldquo;what did you
 							do?&rdquo;
 						</p>
@@ -276,8 +276,8 @@ export default function Home() {
 					Every source you actually work in
 				</h2>
 				<p className="mb-10 max-w-xl text-muted-foreground">
-					Four inputs feed the same timesheet, so nothing you do during the day
-					falls through a gap.
+					Four inputs, one timesheet — nothing you do during the day falls
+					through a gap.
 				</p>
 				<div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 					{SOURCES.map(({ icon: Icon, title, description, status }) => (
@@ -372,11 +372,11 @@ export default function Home() {
 			<section className="mx-auto max-w-6xl px-4 pb-24">
 				<div className="rounded-3xl bg-primary px-6 py-16 text-center sm:px-12">
 					<h2 className="mb-3 text-balance font-semibold text-3xl text-primary-foreground tracking-tight sm:text-4xl">
-						Ready to stop guessing where your day went?
+						Stop guessing where your day went
 					</h2>
 					<p className="mx-auto mb-8 max-w-md text-primary-foreground/80">
 						Install the agent, wire up the browser extension, and your first
-						suggested timesheet is ready by the end of the day.
+						suggested timesheet is waiting for you by tonight.
 					</p>
 					<div className="flex flex-wrap items-center justify-center gap-3">
 						<MarketingCta inverted />
