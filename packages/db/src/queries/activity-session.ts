@@ -125,6 +125,7 @@ export async function listPendingActivitySessions(
 				eq(activitySession.userId, userId),
 				isNull(activitySession.archivedAt),
 				eq(activitySession.suggestionSource, SUGGESTION_SOURCE.NONE),
+				eq(activitySession.status, SESSION_STATUS.SUGGESTED),
 			),
 		)
 		.orderBy(desc(activitySession.startedAt))
@@ -152,7 +153,11 @@ export async function upsertActivitySessions(
 				commitSubjects: sql`excluded.commit_subjects`,
 				signalFingerprint: sql`excluded.signal_fingerprint`,
 			},
-			setWhere: eq(activitySession.status, SESSION_STATUS.SUGGESTED),
+			setWhere: and(
+				eq(activitySession.status, SESSION_STATUS.SUGGESTED),
+				eq(activitySession.edited, false),
+				isNull(activitySession.archivedAt),
+			),
 		})
 		.returning({
 			id: activitySession.id,
@@ -229,4 +234,47 @@ export async function insertActivitySession(
 		.values(values)
 		.returning({ id: activitySession.id });
 	return row;
+}
+
+export async function replaceActivitySessionsForUser(
+	userId: string,
+	firstId: string,
+	values: Partial<typeof activitySession.$inferInsert>,
+	archiveIds: string[],
+	additional: (typeof activitySession.$inferInsert)[] = [],
+) {
+	const operations = [
+		db
+			.update(activitySession)
+			.set({ ...values, edited: true })
+			.where(
+				and(
+					eq(activitySession.id, firstId),
+					eq(activitySession.userId, userId),
+					isNull(activitySession.archivedAt),
+					eq(activitySession.status, SESSION_STATUS.SUGGESTED),
+				),
+			)
+			.returning({ id: activitySession.id }),
+		...archiveIds.map((id) =>
+			db
+				.update(activitySession)
+				.set({ archivedAt: new Date() })
+				.where(
+					and(
+						eq(activitySession.id, id),
+						eq(activitySession.userId, userId),
+						eq(activitySession.status, SESSION_STATUS.SUGGESTED),
+					),
+				),
+		),
+		...additional.map((row) =>
+			db
+				.insert(activitySession)
+				.values({ ...row, userId, edited: true })
+				.returning({ id: activitySession.id }),
+		),
+	] as const;
+	const result = await db.batch(operations);
+	return result[0][0];
 }

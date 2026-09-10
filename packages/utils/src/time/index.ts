@@ -45,3 +45,12 @@ export function formatDurationParts(seconds: number) {
 	);
 	return { hours, minutes };
 }
+
+export function splitTrackedSeconds(
+	durationSeconds: number,
+	spanSeconds: number,
+	firstSpanSeconds: number,
+): [number, number] {
+	const first = Math.floor((durationSeconds * firstSpanSeconds) / spanSeconds);
+	return [first, durationSeconds - first];
+}

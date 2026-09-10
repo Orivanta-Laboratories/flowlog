@@ -1,11 +1,14 @@
-import { AI_SUGGESTION_BATCH_CAP, SESSION_STATUS } from "@flowlog/db/constants";
 import {
-	archiveActivitySessionsForUser,
+	AI_SUGGESTION_BATCH_CAP,
+	SESSION_STATUS,
+	SUGGESTION_SOURCE,
+} from "@flowlog/db/constants";
+import {
 	findActivitySessionForUser,
 	findActivitySessionsForUser,
-	insertActivitySession,
 	listActivitySessionsInRange,
 	listPendingActivitySessions,
+	replaceActivitySessionsForUser,
 	updateActivitySessionForUser,
 	upsertActivitySessions,
 } from "@flowlog/db/queries/activity-session";
@@ -22,13 +25,17 @@ import {
 	ActivitySessionNotAdjacentError,
 	ActivitySessionNotFoundError,
 	ActivitySessionSplitOutOfRangeError,
+	AiLabelingNotConsentedError,
+	buildAiGroupSuggestion,
 	buildAiSuggestion,
 	buildSignalFingerprint,
+	groupSessionsByBranchContext,
 	isExcludedActivity,
+	ProjectNotFoundError,
 	resolveDayRange,
-	secondsBetween,
 	segmentRawEvents,
 	selectLocalSuggestion,
+	splitTrackedSeconds,
 } from "@flowlog/utils";
 
 import { z } from "zod";
@@ -48,16 +55,17 @@ async function syncSessionsForRange(userId: string, from: Date, to: Date) {
 		findUserExclusions(userId),
 	]);
 
-	const trackable = rawEvents.filter(
-		(event) =>
-			exclusions === null ||
-			!isExcludedActivity(
-				{ appName: event.appName, windowTitle: event.windowTitle },
-				{
-					appNames: exclusions.excludedAppNames,
-					titlePatterns: exclusions.excludedTitlePatterns,
-				},
-			),
+	const trackable = rawEvents.map((event) =>
+		exclusions !== null &&
+		isExcludedActivity(
+			{ appName: event.appName, windowTitle: event.windowTitle },
+			{
+				appNames: exclusions.excludedAppNames,
+				titlePatterns: exclusions.excludedTitlePatterns,
+			},
+		)
+			? { ...event, isIdle: true, appName: null, windowTitle: null }
+			: event,
 	);
 
 	const segmented = segmentRawEvents(trackable);
@@ -159,6 +167,95 @@ async function applyAiSuggestions(
 	}
 }
 
+type SessionInRange = Awaited<
+	ReturnType<typeof listActivitySessionsInRange>
+>[number];
+
+function awaitsSuggestion(session: SessionInRange): boolean {
+	return (
+		session.status !== SESSION_STATUS.CONFIRMED &&
+		session.suggestionSource === SUGGESTION_SOURCE.NONE
+	);
+}
+
+async function applyGroupSuggestions(
+	userId: string,
+	sessions: SessionInRange[],
+	projects: { id: string; name: string }[],
+	aiLabelingEnabled: boolean,
+) {
+	const labelledIds = new Set<string>();
+	if (!aiLabelingEnabled) {
+		return labelledIds;
+	}
+
+	const byId = new Map(sessions.map((session) => [session.id, session]));
+	const groups = groupSessionsByBranchContext(
+		sessions.map((session) => ({
+			id: session.id,
+			startedAt: session.startedAt,
+			endedAt: session.endedAt,
+			durationSeconds: session.durationSeconds,
+			appName: session.appName,
+			windowTitle: session.windowTitle,
+			repoName: session.repoName,
+			branchName: session.branchName,
+		})),
+	);
+
+	let calls = 0;
+	for (const group of groups) {
+		if (calls >= AI_SUGGESTION_BATCH_CAP) {
+			return labelledIds;
+		}
+		const pendingMembers = group.members.filter((member) => {
+			const session = byId.get(member.session.id);
+			return session !== undefined && awaitsSuggestion(session);
+		});
+		if (pendingMembers.length === 0) {
+			continue;
+		}
+
+		calls += 1;
+		const suggestion = await buildAiGroupSuggestion(labelSuggestionModel, {
+			repoName: group.repoName,
+			branchName: group.branchName,
+			totalSeconds: group.totalSeconds,
+			commitSubjects: [
+				...new Set(
+					group.members.flatMap(
+						(member) => byId.get(member.session.id)?.commitSubjects ?? [],
+					),
+				),
+			],
+			members: group.members.map((member) => ({
+				appName: member.session.appName,
+				windowTitle: member.session.windowTitle,
+				durationSeconds: member.session.durationSeconds,
+				ambient: member.ambient,
+				corroboratingTokens: member.corroboratingTokens,
+			})),
+			knownProjects: projects,
+		});
+		if (suggestion === null) {
+			continue;
+		}
+
+		for (const member of pendingMembers) {
+			await updateActivitySessionForUser(userId, member.session.id, {
+				suggestedLabel: suggestion.label,
+				suggestedProjectId: suggestion.projectId,
+				suggestionSource: suggestion.source,
+				suggestionRationale: suggestion.rationale,
+				confidencePercent: suggestion.confidencePercent,
+			});
+			labelledIds.add(member.session.id);
+		}
+	}
+
+	return labelledIds;
+}
+
 export const listActivitySessions = protectedProcedure
 	.input(listActivitySessionsSchema)
 	.handler(async ({ input, context }) => {
@@ -172,11 +269,19 @@ export const listActivitySessions = protectedProcedure
 
 		const { stillPending, projects } = await applyLocalSuggestions(userId);
 		const preferences = await findUserExclusions(userId);
+		const aiLabelingEnabled = preferences?.aiLabelingEnabled ?? false;
+
+		const groupLabelledIds = await applyGroupSuggestions(
+			userId,
+			await listActivitySessionsInRange(userId, from, to, null, 500),
+			projects,
+			aiLabelingEnabled,
+		);
 		await applyAiSuggestions(
 			userId,
-			stillPending,
+			stillPending.filter((session) => !groupLabelledIds.has(session.id)),
 			projects,
-			preferences?.aiLabelingEnabled ?? false,
+			aiLabelingEnabled,
 		);
 
 		return listActivitySessionsInRange(userId, from, to, null, 500);
@@ -200,6 +305,14 @@ export const confirmActivitySessions = protectedProcedure
 			sessions.map((session) => [session.id, session]),
 		);
 
+		const allowedProjectIds = new Set(
+			(await listProjectsByUser(userId)).map((project) => project.id),
+		);
+		for (const entry of input.entries) {
+			if (entry.projectId !== null && !allowedProjectIds.has(entry.projectId)) {
+				throwAsOrpcError(new ProjectNotFoundError(entry.projectId));
+			}
+		}
 		const confirmedAt = new Date();
 		const confirmationRows = [];
 
@@ -257,6 +370,12 @@ export const mergeActivitySessions = protectedProcedure
 			);
 		}
 
+		for (const session of sessions) {
+			if (session.status === SESSION_STATUS.CONFIRMED) {
+				throwAsOrpcError(new ActivitySessionAlreadyConfirmedError(session.id));
+			}
+		}
+
 		const ordered = [...sessions].sort(
 			(left, right) => left.startedAt.getTime() - right.startedAt.getTime(),
 		);
@@ -283,25 +402,33 @@ export const mergeActivitySessions = protectedProcedure
 			...new Set(ordered.flatMap((session) => session.commitSubjects)),
 		];
 
-		const merged = await insertActivitySession({
+		const merged = await replaceActivitySessionsForUser(
 			userId,
-			startedAt,
-			endedAt,
-			durationSeconds: secondsBetween(startedAt, endedAt),
-			appName: first.appName,
-			windowTitle: first.windowTitle,
-			repoName: first.repoName,
-			branchName: first.branchName,
-			commitSubjects,
-			signalFingerprint: first.signalFingerprint,
-			suggestedLabel: first.suggestedLabel,
-			suggestedProjectId: first.projectId,
-			suggestionSource: first.suggestionSource,
-			suggestionRationale: first.suggestionRationale,
-			confidencePercent: first.confidencePercent,
-		});
+			first.id,
+			{
+				edited: true,
+				userId,
+				startedAt,
+				endedAt,
+				durationSeconds: ordered.reduce(
+					(seconds, session) => seconds + session.durationSeconds,
+					0,
+				),
+				appName: first.appName,
+				windowTitle: first.windowTitle,
+				repoName: first.repoName,
+				branchName: first.branchName,
+				commitSubjects,
+				signalFingerprint: first.signalFingerprint,
+				suggestedLabel: first.suggestedLabel,
+				suggestedProjectId: first.projectId,
+				suggestionSource: first.suggestionSource,
+				suggestionRationale: first.suggestionRationale,
+				confidencePercent: first.confidencePercent,
+			},
+			input.sessionIds.filter((id) => id !== first.id),
+		);
 
-		await archiveActivitySessionsForUser(userId, input.sessionIds, new Date());
 		return merged;
 	});
 
@@ -320,11 +447,20 @@ export const splitActivitySession = protectedProcedure
 			throwAsOrpcError(new ActivitySessionSplitOutOfRangeError());
 		}
 
-		const firstHalf = await insertActivitySession({
+		if (session.status === SESSION_STATUS.CONFIRMED) {
+			throwAsOrpcError(new ActivitySessionAlreadyConfirmedError(session.id));
+		}
+		const [firstSeconds, secondSeconds] = splitTrackedSeconds(
+			session.durationSeconds,
+			session.endedAt.getTime() - session.startedAt.getTime(),
+			input.splitAt.getTime() - session.startedAt.getTime(),
+		);
+		const firstValues = {
+			edited: true,
 			userId,
 			startedAt: session.startedAt,
 			endedAt: input.splitAt,
-			durationSeconds: secondsBetween(session.startedAt, input.splitAt),
+			durationSeconds: firstSeconds,
 			appName: session.appName,
 			windowTitle: session.windowTitle,
 			repoName: session.repoName,
@@ -336,13 +472,14 @@ export const splitActivitySession = protectedProcedure
 			suggestionSource: session.suggestionSource,
 			suggestionRationale: session.suggestionRationale,
 			confidencePercent: session.confidencePercent,
-		});
+		};
 
-		const secondHalf = await insertActivitySession({
+		const secondValues = {
+			edited: true,
 			userId,
 			startedAt: input.splitAt,
 			endedAt: session.endedAt,
-			durationSeconds: secondsBetween(input.splitAt, session.endedAt),
+			durationSeconds: secondSeconds,
 			appName: session.appName,
 			windowTitle: session.windowTitle,
 			repoName: session.repoName,
@@ -354,10 +491,17 @@ export const splitActivitySession = protectedProcedure
 			suggestionSource: session.suggestionSource,
 			suggestionRationale: session.suggestionRationale,
 			confidencePercent: session.confidencePercent,
-		});
+		};
 
-		await archiveActivitySessionsForUser(userId, [input.id], new Date());
-		return { firstHalf, secondHalf };
+		const firstHalf = await replaceActivitySessionsForUser(
+			userId,
+			session.id,
+			firstValues,
+			[],
+			[secondValues],
+		);
+
+		return { firstHalf };
 	});
 
 export const requestAiSuggestions = protectedProcedure
@@ -368,12 +512,17 @@ export const requestAiSuggestions = protectedProcedure
 	)
 	.handler(async ({ input, context }) => {
 		const userId = context.session.user.id;
+		const preferences = await findUserExclusions(userId);
+		if (!preferences?.aiLabelingEnabled) {
+			throwAsOrpcError(new AiLabelingNotConsentedError());
+		}
 		const [sessions, projects] = await Promise.all([
 			findActivitySessionsForUser(userId, input.sessionIds),
 			listProjectsByUser(userId),
 		]);
 
 		for (const session of sessions) {
+			if (session.status === SESSION_STATUS.CONFIRMED) continue;
 			const suggestion = await buildAiSuggestion(labelSuggestionModel, {
 				signals: {
 					appName: session.appName,
