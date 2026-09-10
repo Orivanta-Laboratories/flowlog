@@ -1,0 +1,11 @@
+[Unit]
+Description=Flowlog background tracking agent
+After=graphical-session.target
+
+[Service]
+ExecStart=%h/.local/bin/flowlog-agent run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,31 @@
+[package]
+name = "flowlog-agent"
+version = "0.1.0"
+edition = "2021"
+description = "Flowlog background agent: tracks active window, idle time, and git activity, and syncs it to the Flowlog server."
+license = "MIT"
+
+[[bin]]
+name = "flowlog-agent"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal", "fs"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+thiserror = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+directories = "5"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+zbus = { version = "4", default-features = false, features = ["tokio"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
