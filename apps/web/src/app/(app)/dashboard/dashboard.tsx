@@ -26,6 +26,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@flowlog/ui/components/table";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -191,16 +192,16 @@ export default function Dashboard({
 	}
 
 	return (
-		<div className="mx-auto max-w-5xl px-4 py-6">
+		<>
 			<div className="mb-4 flex flex-wrap items-center justify-between gap-3">
 				<div className="flex items-center gap-2">
 					<Button
 						variant="outline"
-						size="sm"
+						size="icon-sm"
 						onClick={() => setDate((d) => addDaysToDateInputValue(d, -1))}
 						aria-label="Previous day"
 					>
-						←
+						<ChevronLeftIcon />
 					</Button>
 					<Input
 						type="date"
@@ -210,11 +211,11 @@ export default function Dashboard({
 					/>
 					<Button
 						variant="outline"
-						size="sm"
+						size="icon-sm"
 						onClick={() => setDate((d) => addDaysToDateInputValue(d, 1))}
 						aria-label="Next day"
 					>
-						→
+						<ChevronRightIcon />
 					</Button>
 				</div>
 				<div className="flex gap-2">
@@ -362,6 +363,6 @@ export default function Dashboard({
 					</TableBody>
 				</Table>
 			)}
-		</div>
+		</>
 	);
 }
