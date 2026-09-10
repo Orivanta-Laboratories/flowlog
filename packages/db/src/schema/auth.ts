@@ -1,5 +1,9 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, uniqueIndex, pgEnum } from "drizzle-orm/pg-core";
+
+import { LOCALE, LOCALE_VALUES } from "../constants";
+
+export const localeEnum = pgEnum("locale", LOCALE_VALUES);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -7,6 +11,8 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  locale: localeEnum("locale").default(LOCALE.EN).notNull(),
+  aiLabelingEnabled: boolean("ai_labeling_enabled").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
