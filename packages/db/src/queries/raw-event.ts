@@ -3,18 +3,26 @@ import { and, asc, eq, gte, lt, lte } from "drizzle-orm";
 import { db } from "../index";
 import { rawEvent } from "../schema/tracking";
 
-export async function insertRawEvents(values: (typeof rawEvent.$inferInsert)[]) {
+export async function insertRawEvents(
+	values: (typeof rawEvent.$inferInsert)[],
+) {
 	if (values.length === 0) {
 		return [];
 	}
 	return db
 		.insert(rawEvent)
 		.values(values)
-		.onConflictDoNothing({ target: [rawEvent.deviceId, rawEvent.clientEventId] })
+		.onConflictDoNothing({
+			target: [rawEvent.deviceId, rawEvent.clientEventId],
+		})
 		.returning({ id: rawEvent.id });
 }
 
-export async function listRawEventsInRange(userId: string, from: Date, to: Date) {
+export async function listRawEventsInRange(
+	userId: string,
+	from: Date,
+	to: Date,
+) {
 	return db
 		.select({
 			occurredAt: rawEvent.occurredAt,
@@ -28,7 +36,11 @@ export async function listRawEventsInRange(userId: string, from: Date, to: Date)
 		})
 		.from(rawEvent)
 		.where(
-			and(eq(rawEvent.userId, userId), gte(rawEvent.occurredAt, from), lt(rawEvent.occurredAt, to)),
+			and(
+				eq(rawEvent.userId, userId),
+				gte(rawEvent.occurredAt, from),
+				lt(rawEvent.occurredAt, to),
+			),
 		)
 		.orderBy(asc(rawEvent.occurredAt));
 }

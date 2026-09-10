@@ -1,4 +1,15 @@
-import { and, asc, desc, eq, gt, gte, inArray, isNull, lt, sql } from "drizzle-orm";
+import {
+	and,
+	asc,
+	desc,
+	eq,
+	gt,
+	gte,
+	inArray,
+	isNull,
+	lt,
+	sql,
+} from "drizzle-orm";
 
 import { SESSION_STATUS, SUGGESTION_SOURCE } from "../constants";
 import { db } from "../index";
@@ -52,7 +63,10 @@ export async function listActivitySessionsInRange(
 		.limit(limit);
 }
 
-export async function findActivitySessionForUser(userId: string, activitySessionId: string) {
+export async function findActivitySessionForUser(
+	userId: string,
+	activitySessionId: string,
+) {
 	const [row] = await db
 		.select(sessionListColumns)
 		.from(activitySession)
@@ -68,7 +82,10 @@ export async function findActivitySessionForUser(userId: string, activitySession
 	return row ?? null;
 }
 
-export async function findActivitySessionsForUser(userId: string, activitySessionIds: string[]) {
+export async function findActivitySessionsForUser(
+	userId: string,
+	activitySessionIds: string[],
+) {
 	if (activitySessionIds.length === 0) {
 		return [];
 	}
@@ -86,7 +103,10 @@ export async function findActivitySessionsForUser(userId: string, activitySessio
 		.orderBy(asc(activitySession.startedAt));
 }
 
-export async function listPendingActivitySessions(userId: string, limit: number) {
+export async function listPendingActivitySessions(
+	userId: string,
+	limit: number,
+) {
 	return db
 		.select({
 			id: activitySession.id,
@@ -111,7 +131,9 @@ export async function listPendingActivitySessions(userId: string, limit: number)
 		.limit(limit);
 }
 
-export async function upsertActivitySessions(values: (typeof activitySession.$inferInsert)[]) {
+export async function upsertActivitySessions(
+	values: (typeof activitySession.$inferInsert)[],
+) {
 	if (values.length === 0) {
 		return [];
 	}
@@ -132,7 +154,10 @@ export async function upsertActivitySessions(values: (typeof activitySession.$in
 			},
 			setWhere: eq(activitySession.status, SESSION_STATUS.SUGGESTED),
 		})
-		.returning({ id: activitySession.id, startedAt: activitySession.startedAt });
+		.returning({
+			id: activitySession.id,
+			startedAt: activitySession.startedAt,
+		});
 }
 
 export async function updateActivitySessionForUser(
@@ -196,7 +221,9 @@ export async function archiveActivitySessionsForUser(
 		.returning({ id: activitySession.id });
 }
 
-export async function insertActivitySession(values: typeof activitySession.$inferInsert) {
+export async function insertActivitySession(
+	values: typeof activitySession.$inferInsert,
+) {
 	const [row] = await db
 		.insert(activitySession)
 		.values(values)

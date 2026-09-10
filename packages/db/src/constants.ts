@@ -1,6 +1,7 @@
 export const EVENT_SOURCE = {
 	OS: "OS",
 	GIT: "GIT",
+	BROWSER: "BROWSER",
 } as const;
 
 export type EventSource = (typeof EVENT_SOURCE)[keyof typeof EVENT_SOURCE];
@@ -10,7 +11,8 @@ export const SESSION_STATUS = {
 	CONFIRMED: "CONFIRMED",
 } as const;
 
-export type SessionStatus = (typeof SESSION_STATUS)[keyof typeof SESSION_STATUS];
+export type SessionStatus =
+	(typeof SESSION_STATUS)[keyof typeof SESSION_STATUS];
 
 export const SUGGESTION_SOURCE = {
 	RULE: "RULE",
@@ -19,7 +21,8 @@ export const SUGGESTION_SOURCE = {
 	NONE: "NONE",
 } as const;
 
-export type SuggestionSource = (typeof SUGGESTION_SOURCE)[keyof typeof SUGGESTION_SOURCE];
+export type SuggestionSource =
+	(typeof SUGGESTION_SOURCE)[keyof typeof SUGGESTION_SOURCE];
 
 export const RULE_FIELD = {
 	APP_NAME: "APP_NAME",
@@ -42,9 +45,11 @@ export const DEVICE_PLATFORM = {
 	LINUX: "LINUX",
 	MACOS: "MACOS",
 	WINDOWS: "WINDOWS",
+	CHROME_EXTENSION: "CHROME_EXTENSION",
 } as const;
 
-export type DevicePlatform = (typeof DEVICE_PLATFORM)[keyof typeof DEVICE_PLATFORM];
+export type DevicePlatform =
+	(typeof DEVICE_PLATFORM)[keyof typeof DEVICE_PLATFORM];
 
 export const LOCALE = {
 	EN: "en",
@@ -63,9 +68,16 @@ export const PROJECT_COLOR = {
 
 export type ProjectColor = (typeof PROJECT_COLOR)[keyof typeof PROJECT_COLOR];
 
-export const EVENT_SOURCE_VALUES = [EVENT_SOURCE.OS, EVENT_SOURCE.GIT] as const;
+export const EVENT_SOURCE_VALUES = [
+	EVENT_SOURCE.OS,
+	EVENT_SOURCE.GIT,
+	EVENT_SOURCE.BROWSER,
+] as const;
 
-export const SESSION_STATUS_VALUES = [SESSION_STATUS.SUGGESTED, SESSION_STATUS.CONFIRMED] as const;
+export const SESSION_STATUS_VALUES = [
+	SESSION_STATUS.SUGGESTED,
+	SESSION_STATUS.CONFIRMED,
+] as const;
 
 export const SUGGESTION_SOURCE_VALUES = [
 	SUGGESTION_SOURCE.RULE,
@@ -91,7 +103,11 @@ export const DEVICE_PLATFORM_VALUES = [
 	DEVICE_PLATFORM.LINUX,
 	DEVICE_PLATFORM.MACOS,
 	DEVICE_PLATFORM.WINDOWS,
+	DEVICE_PLATFORM.CHROME_EXTENSION,
 ] as const;
+
+export const MAX_EXPORT_RANGE_DAYS = 92;
+export const AI_SUGGESTION_BATCH_CAP = 5;
 
 export const LOCALE_VALUES = [LOCALE.EN, LOCALE.FR] as const;
 

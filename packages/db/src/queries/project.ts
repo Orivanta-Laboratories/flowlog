@@ -29,7 +29,11 @@ export async function findProjectByUser(userId: string, projectId: string) {
 		})
 		.from(project)
 		.where(
-			and(eq(project.id, projectId), eq(project.userId, userId), isNull(project.archivedAt)),
+			and(
+				eq(project.id, projectId),
+				eq(project.userId, userId),
+				isNull(project.archivedAt),
+			),
 		)
 		.limit(1);
 	return row ?? null;
@@ -39,34 +43,64 @@ export async function findProjectByNameForUser(userId: string, name: string) {
 	const [row] = await db
 		.select({ id: project.id, name: project.name })
 		.from(project)
-		.where(and(eq(project.userId, userId), eq(project.name, name), isNull(project.archivedAt)))
+		.where(
+			and(
+				eq(project.userId, userId),
+				eq(project.name, name),
+				isNull(project.archivedAt),
+			),
+		)
 		.limit(1);
 	return row ?? null;
 }
 
 export async function insertProject(values: typeof project.$inferInsert) {
-	const [row] = await db.insert(project).values(values).returning({ id: project.id });
+	const [row] = await db
+		.insert(project)
+		.values(values)
+		.returning({ id: project.id });
 	return row;
 }
 
 export async function updateProjectForUser(
 	userId: string,
 	projectId: string,
-	values: Partial<Pick<typeof project.$inferInsert, "name" | "clientName" | "color" | "billingRateCents">>,
+	values: Partial<
+		Pick<
+			typeof project.$inferInsert,
+			"name" | "clientName" | "color" | "billingRateCents"
+		>
+	>,
 ) {
 	const [row] = await db
 		.update(project)
 		.set(values)
-		.where(and(eq(project.id, projectId), eq(project.userId, userId), isNull(project.archivedAt)))
+		.where(
+			and(
+				eq(project.id, projectId),
+				eq(project.userId, userId),
+				isNull(project.archivedAt),
+			),
+		)
 		.returning({ id: project.id });
 	return row ?? null;
 }
 
-export async function archiveProjectForUser(userId: string, projectId: string, archivedAt: Date) {
+export async function archiveProjectForUser(
+	userId: string,
+	projectId: string,
+	archivedAt: Date,
+) {
 	const [row] = await db
 		.update(project)
 		.set({ archivedAt })
-		.where(and(eq(project.id, projectId), eq(project.userId, userId), isNull(project.archivedAt)))
+		.where(
+			and(
+				eq(project.id, projectId),
+				eq(project.userId, userId),
+				isNull(project.archivedAt),
+			),
+		)
 		.returning({ id: project.id });
 	if (row) {
 		await db

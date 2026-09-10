@@ -17,16 +17,27 @@ export async function listMatchingRulesByUser(userId: string) {
 		})
 		.from(matchingRule)
 		.innerJoin(project, eq(project.id, matchingRule.projectId))
-		.where(and(eq(matchingRule.userId, userId), isNull(matchingRule.archivedAt)))
+		.where(
+			and(eq(matchingRule.userId, userId), isNull(matchingRule.archivedAt)),
+		)
 		.orderBy(desc(matchingRule.priority), asc(matchingRule.value));
 }
 
-export async function insertMatchingRule(values: typeof matchingRule.$inferInsert) {
-	const [row] = await db.insert(matchingRule).values(values).returning({ id: matchingRule.id });
+export async function insertMatchingRule(
+	values: typeof matchingRule.$inferInsert,
+) {
+	const [row] = await db
+		.insert(matchingRule)
+		.values(values)
+		.returning({ id: matchingRule.id });
 	return row;
 }
 
-export async function archiveMatchingRuleForUser(userId: string, ruleId: string, archivedAt: Date) {
+export async function archiveMatchingRuleForUser(
+	userId: string,
+	ruleId: string,
+	archivedAt: Date,
+) {
 	const [row] = await db
 		.update(matchingRule)
 		.set({ archivedAt })

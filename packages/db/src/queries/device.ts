@@ -37,14 +37,27 @@ export async function findActiveDeviceByTokenHash(tokenHash: string) {
 }
 
 export async function touchDeviceLastSeen(deviceId: string, seenAt: Date) {
-	await db.update(device).set({ lastSeenAt: seenAt }).where(eq(device.id, deviceId));
+	await db
+		.update(device)
+		.set({ lastSeenAt: seenAt })
+		.where(eq(device.id, deviceId));
 }
 
-export async function revokeDeviceForUser(userId: string, deviceId: string, revokedAt: Date) {
+export async function revokeDeviceForUser(
+	userId: string,
+	deviceId: string,
+	revokedAt: Date,
+) {
 	const [row] = await db
 		.update(device)
 		.set({ revokedAt })
-		.where(and(eq(device.id, deviceId), eq(device.userId, userId), isNull(device.revokedAt)))
+		.where(
+			and(
+				eq(device.id, deviceId),
+				eq(device.userId, userId),
+				isNull(device.revokedAt),
+			),
+		)
 		.returning({ id: device.id });
 	return row ?? null;
 }

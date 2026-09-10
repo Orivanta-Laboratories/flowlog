@@ -3,14 +3,22 @@ import { and, desc, eq, gte, lt } from "drizzle-orm";
 import { db } from "../index";
 import { confirmation } from "../schema/tracking";
 
-export async function insertConfirmations(values: (typeof confirmation.$inferInsert)[]) {
+export async function insertConfirmations(
+	values: (typeof confirmation.$inferInsert)[],
+) {
 	if (values.length === 0) {
 		return [];
 	}
-	return db.insert(confirmation).values(values).returning({ id: confirmation.id });
+	return db
+		.insert(confirmation)
+		.values(values)
+		.returning({ id: confirmation.id });
 }
 
-export async function findLatestConfirmationByFingerprint(userId: string, fingerprint: string) {
+export async function findLatestConfirmationByFingerprint(
+	userId: string,
+	fingerprint: string,
+) {
 	const [row] = await db
 		.select({
 			finalLabel: confirmation.finalLabel,
@@ -19,14 +27,21 @@ export async function findLatestConfirmationByFingerprint(userId: string, finger
 		})
 		.from(confirmation)
 		.where(
-			and(eq(confirmation.userId, userId), eq(confirmation.signalFingerprint, fingerprint)),
+			and(
+				eq(confirmation.userId, userId),
+				eq(confirmation.signalFingerprint, fingerprint),
+			),
 		)
 		.orderBy(desc(confirmation.confirmedAt))
 		.limit(1);
 	return row ?? null;
 }
 
-export async function listConfirmationsInRange(userId: string, from: Date, to: Date) {
+export async function listConfirmationsInRange(
+	userId: string,
+	from: Date,
+	to: Date,
+) {
 	return db
 		.select({
 			activitySessionId: confirmation.activitySessionId,

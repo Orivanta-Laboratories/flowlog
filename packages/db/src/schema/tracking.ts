@@ -27,11 +27,20 @@ import {
 import { user } from "./auth";
 
 export const eventSourceEnum = pgEnum("event_source", EVENT_SOURCE_VALUES);
-export const sessionStatusEnum = pgEnum("session_status", SESSION_STATUS_VALUES);
-export const suggestionSourceEnum = pgEnum("suggestion_source", SUGGESTION_SOURCE_VALUES);
+export const sessionStatusEnum = pgEnum(
+	"session_status",
+	SESSION_STATUS_VALUES,
+);
+export const suggestionSourceEnum = pgEnum(
+	"suggestion_source",
+	SUGGESTION_SOURCE_VALUES,
+);
 export const ruleFieldEnum = pgEnum("rule_field", RULE_FIELD_VALUES);
 export const ruleOperatorEnum = pgEnum("rule_operator", RULE_OPERATOR_VALUES);
-export const devicePlatformEnum = pgEnum("device_platform", DEVICE_PLATFORM_VALUES);
+export const devicePlatformEnum = pgEnum(
+	"device_platform",
+	DEVICE_PLATFORM_VALUES,
+);
 export const projectColorEnum = pgEnum("project_color", PROJECT_COLOR_VALUES);
 
 export const project = pgTable(
@@ -46,7 +55,9 @@ export const project = pgTable(
 		color: projectColorEnum("color").default(PROJECT_COLOR.CHART_1).notNull(),
 		billingRateCents: integer("billing_rate_cents"),
 		archivedAt: timestamp("archived_at", { withTimezone: true }),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true })
 			.defaultNow()
 			.$onUpdate(() => new Date())
@@ -71,12 +82,16 @@ export const matchingRule = pgTable(
 			.notNull()
 			.references(() => project.id, { onDelete: "cascade" }),
 		field: ruleFieldEnum("field").notNull(),
-		operator: ruleOperatorEnum("operator").default(RULE_OPERATOR.CONTAINS).notNull(),
+		operator: ruleOperatorEnum("operator")
+			.default(RULE_OPERATOR.CONTAINS)
+			.notNull(),
 		value: text("value").notNull(),
 		label: text("label"),
 		priority: integer("priority").default(0).notNull(),
 		archivedAt: timestamp("archived_at", { withTimezone: true }),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true })
 			.defaultNow()
 			.$onUpdate(() => new Date())
@@ -101,7 +116,9 @@ export const device = pgTable(
 		tokenPreview: text("token_preview").notNull(),
 		lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
 		revokedAt: timestamp("revoked_at", { withTimezone: true }),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("device_user_id_idx").on(table.userId),
@@ -128,11 +145,19 @@ export const rawEvent = pgTable(
 		branchName: text("branch_name"),
 		commitSubject: text("commit_subject"),
 		isIdle: boolean("is_idle").default(false).notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
-		index("raw_event_user_id_occurred_at_idx").on(table.userId, table.occurredAt),
-		uniqueIndex("raw_event_device_id_client_event_id_uidx").on(table.deviceId, table.clientEventId),
+		index("raw_event_user_id_occurred_at_idx").on(
+			table.userId,
+			table.occurredAt,
+		),
+		uniqueIndex("raw_event_device_id_client_event_id_uidx").on(
+			table.deviceId,
+			table.clientEventId,
+		),
 	],
 );
 
@@ -152,31 +177,46 @@ export const activitySession = pgTable(
 		branchName: text("branch_name"),
 		commitSubjects: text("commit_subjects").array().default([]).notNull(),
 		signalFingerprint: text("signal_fingerprint").notNull(),
-		status: sessionStatusEnum("status").default(SESSION_STATUS.SUGGESTED).notNull(),
+		status: sessionStatusEnum("status")
+			.default(SESSION_STATUS.SUGGESTED)
+			.notNull(),
 		suggestedLabel: text("suggested_label"),
-		suggestedProjectId: uuid("suggested_project_id").references(() => project.id, {
-			onDelete: "set null",
-		}),
+		suggestedProjectId: uuid("suggested_project_id").references(
+			() => project.id,
+			{
+				onDelete: "set null",
+			},
+		),
 		suggestionSource: suggestionSourceEnum("suggestion_source")
 			.default(SUGGESTION_SOURCE.NONE)
 			.notNull(),
 		suggestionRationale: text("suggestion_rationale"),
 		confidencePercent: integer("confidence_percent").default(0).notNull(),
 		finalLabel: text("final_label"),
-		projectId: uuid("project_id").references(() => project.id, { onDelete: "set null" }),
+		projectId: uuid("project_id").references(() => project.id, {
+			onDelete: "set null",
+		}),
 		edited: boolean("edited").default(false).notNull(),
 		confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
 		archivedAt: timestamp("archived_at", { withTimezone: true }),
-		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		updatedAt: timestamp("updated_at", { withTimezone: true })
 			.defaultNow()
 			.$onUpdate(() => new Date())
 			.notNull(),
 	},
 	(table) => [
-		index("activity_session_user_id_fingerprint_idx").on(table.userId, table.signalFingerprint),
+		index("activity_session_user_id_fingerprint_idx").on(
+			table.userId,
+			table.signalFingerprint,
+		),
 		index("activity_session_project_id_idx").on(table.projectId),
-		uniqueIndex("activity_session_user_id_started_at_uidx").on(table.userId, table.startedAt),
+		uniqueIndex("activity_session_user_id_started_at_uidx").on(
+			table.userId,
+			table.startedAt,
+		),
 	],
 );
 
@@ -196,13 +236,18 @@ export const confirmation = pgTable(
 			onDelete: "set null",
 		}),
 		suggestedLabel: text("suggested_label"),
-		suggestedProjectId: uuid("suggested_project_id").references(() => project.id, {
-			onDelete: "set null",
-		}),
+		suggestedProjectId: uuid("suggested_project_id").references(
+			() => project.id,
+			{
+				onDelete: "set null",
+			},
+		),
 		suggestionSource: suggestionSourceEnum("suggestion_source").notNull(),
 		confidencePercent: integer("confidence_percent").notNull(),
 		edited: boolean("edited").notNull(),
-		confirmedAt: timestamp("confirmed_at", { withTimezone: true }).defaultNow().notNull(),
+		confirmedAt: timestamp("confirmed_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("confirmation_user_id_fingerprint_idx").on(
@@ -237,13 +282,16 @@ export const rawEventRelations = relations(rawEvent, ({ one }) => ({
 	}),
 }));
 
-export const activitySessionRelations = relations(activitySession, ({ one, many }) => ({
-	project: one(project, {
-		fields: [activitySession.projectId],
-		references: [project.id],
+export const activitySessionRelations = relations(
+	activitySession,
+	({ one, many }) => ({
+		project: one(project, {
+			fields: [activitySession.projectId],
+			references: [project.id],
+		}),
+		confirmations: many(confirmation),
 	}),
-	confirmations: many(confirmation),
-}));
+);
 
 export const confirmationRelations = relations(confirmation, ({ one }) => ({
 	activitySession: one(activitySession, {
