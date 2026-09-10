@@ -1,0 +1,24 @@
+{
+  "name": "@flowlog/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@flowlog/db": "workspace:*",
+    "@flowlog/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@flowlog/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

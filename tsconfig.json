@@ -1,0 +1,3 @@
+{
+  "extends": "@flowlog/config/tsconfig.base.json"
+}
