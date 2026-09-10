@@ -1,0 +1,24 @@
+[package]
+name = "flowlog-agent-gui"
+version = "0.1.0"
+edition = "2021"
+description = "Flowlog desktop app: tray icon and status window around the flowlog-agent background tracker."
+license = "MIT"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+flowlog-agent = { path = ".." }
+tauri = { version = "2", features = ["tray-icon"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal", "fs"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[[bin]]
+name = "flowlog-agent-gui"
+path = "src/main.rs"

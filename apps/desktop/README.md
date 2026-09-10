@@ -4,10 +4,23 @@ Background Linux agent for Flowlog. Tracks the focused window, idle time, and
 git branch/commit activity, and syncs it to the Flowlog server so the web app
 can turn it into a suggested timesheet.
 
-## Building
+This is a Cargo workspace with two binaries built from the same tracking
+core (`src/agent.rs`):
+
+- **`flowlog-agent`** (this directory) — the headless CLI/daemon, meant to
+  run as a systemd `--user` service. No visible UI; status only shows up in
+  logs.
+- **`gui`** ([`gui/`](./gui)) — a tray icon + status window built with
+  [Tauri](https://tauri.app), for anyone who wants to see tracking status
+  and pause/resume without a terminal. See [`gui/README.md`](./gui/README.md).
+
+Pick one, not both — running the CLI service and the GUI at the same time
+means two processes racing to flush the same queue file.
+
+## Building the CLI
 
 ```bash
-cargo build --release
+cargo build --release -p flowlog-agent
 ```
 
 The binary is written to `target/release/flowlog-agent`.
@@ -22,7 +35,8 @@ The binary is written to `target/release/flowlog-agent`.
    flowlog-agent pair --token <TOKEN> --server https://your-flowlog-server
    ```
 
-   This writes `~/.config/flowlog-agent/config.toml`.
+   This writes `~/.config/flowlog-agent/config.toml`. The GUI reads and
+   writes the same file, so pairing with the CLI is enough for either.
 3. Tell the agent which local git repositories to watch:
 
    ```bash
@@ -31,7 +45,8 @@ The binary is written to `target/release/flowlog-agent`.
 
 4. Start it: `flowlog-agent run`. On most Linux setups you'll want this run
    as a systemd `--user` service so it starts on login — see
-   [`flowlog-agent.service`](./flowlog-agent.service).
+   [`flowlog-agent.service`](./flowlog-agent.service). Or, if you'd rather
+   have a tray icon and a window, use the GUI instead (see below).
 
 ## How window detection works
 

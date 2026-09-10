@@ -1,9 +1,16 @@
+[workspace]
+members = ["gui"]
+
 [package]
 name = "flowlog-agent"
 version = "0.1.0"
 edition = "2021"
 description = "Flowlog background agent: tracks active window, idle time, and git activity, and syncs it to the Flowlog server."
 license = "MIT"
+
+[lib]
+name = "flowlog_agent"
+path = "src/lib.rs"
 
 [[bin]]
 name = "flowlog-agent"

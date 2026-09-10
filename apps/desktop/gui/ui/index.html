@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Flowlog</title>
+		<link rel="stylesheet" href="style.css" />
+	</head>
+	<body>
+		<header class="app-header">
+			<span class="app-title">Flowlog</span>
+			<span class="status-pill" id="status-pill">
+				<span class="status-dot" id="status-dot"></span>
+				<span id="status-text">Checking…</span>
+			</span>
+		</header>
+
+		<main>
+			<section class="card" id="tracking-card">
+				<div class="row">
+					<span class="label">Current activity</span>
+				</div>
+				<p class="current-app" id="current-app">—</p>
+				<p class="current-title" id="current-title"></p>
+				<div class="row divider">
+					<span class="label">Queued events</span>
+					<span id="queued-count">0</span>
+				</div>
+				<div class="row">
+					<span class="label">Last sync</span>
+					<span id="last-sync">—</span>
+				</div>
+				<button class="button primary" id="toggle-pause">Pause tracking</button>
+			</section>
+
+			<section class="card" id="settings-card">
+				<h2>Connection</h2>
+				<label for="server-url">Server URL</label>
+				<input id="server-url" type="text" placeholder="https://your-flowlog-server" />
+				<label for="device-token">Device token</label>
+				<input id="device-token" type="password" placeholder="Paste the token from Settings → Devices" />
+				<button class="button secondary" id="save-config">Save</button>
+				<p class="hint" id="settings-status"></p>
+			</section>
+		</main>
+	</body>
+</html>
