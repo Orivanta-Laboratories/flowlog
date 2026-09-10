@@ -14,9 +14,7 @@ export type SegmentationEvent = {
 export type SegmentationOptions = {
 	sampleIntervalSeconds: number;
 	browserSampleIntervalSeconds: number;
-	maxSampleGapSeconds: number;
 	minimumSessionSeconds: number;
-	absorbNoiseSeconds: number;
 };
 
 export type SegmentedSession = {
@@ -50,9 +48,7 @@ type Span = {
 export const DEFAULT_SEGMENTATION_OPTIONS: SegmentationOptions = {
 	sampleIntervalSeconds: 15,
 	browserSampleIntervalSeconds: 60,
-	maxSampleGapSeconds: 90,
 	minimumSessionSeconds: 90,
-	absorbNoiseSeconds: 90,
 };
 
 function expectedIntervalSeconds(
@@ -77,12 +73,11 @@ export function buildActivityKey(activity: {
 }
 
 function spanDurationSeconds(span: Span): number {
-	return Math.round((span.endedAt.getTime() - span.startedAt.getTime()) / 1000);
-}
-
-function gapSecondsBetween(earlier: Span, later: Span): number {
-	return Math.round(
-		(later.startedAt.getTime() - earlier.endedAt.getTime()) / 1000,
+	return Math.floor(
+		span.samples.reduce(
+			(seconds, sample) => seconds + sample.coverageSeconds,
+			0,
+		),
 	);
 }
 
@@ -92,31 +87,29 @@ function toActivitySamples(
 ): ActivitySample[] {
 	const trackable = events.filter(
 		(event) =>
-			(event.source === EVENT_SOURCE.OS ||
-				event.source === EVENT_SOURCE.BROWSER) &&
-			event.appName !== null,
+			event.source === EVENT_SOURCE.OS || event.source === EVENT_SOURCE.BROWSER,
 	);
 	return trackable.map((event, index) => {
 		const next = trackable[index + 1];
 		const ownIntervalSeconds = expectedIntervalSeconds(event.source, options);
 		const gapSeconds = next
-			? Math.round(
-					(next.occurredAt.getTime() - event.occurredAt.getTime()) / 1000,
-				)
+			? (next.occurredAt.getTime() - event.occurredAt.getTime()) / 1000
 			: ownIntervalSeconds;
 		const appName = event.appName ?? "";
 		return {
 			occurredAt: event.occurredAt,
-			coverageSeconds: event.isIdle
-				? 0
-				: Math.max(0, Math.min(ownIntervalSeconds, gapSeconds)),
-			activityKey: event.isIdle
-				? ""
-				: buildActivityKey({
-						appName,
-						repoName: event.repoName,
-						branchName: event.branchName,
-					}),
+			coverageSeconds:
+				event.isIdle || event.appName === null
+					? 0
+					: Math.max(0, Math.min(ownIntervalSeconds, gapSeconds)),
+			activityKey:
+				event.isIdle || event.appName === null
+					? ""
+					: buildActivityKey({
+							appName,
+							repoName: event.repoName,
+							branchName: event.branchName,
+						}),
 			appName,
 			windowTitle: event.windowTitle,
 			repoName: event.repoName,
@@ -125,22 +118,21 @@ function toActivitySamples(
 	});
 }
 
-function groupSamplesIntoSpans(
-	samples: ActivitySample[],
-	options: SegmentationOptions,
-): Span[] {
+function groupSamplesIntoSpans(samples: ActivitySample[]): Span[] {
 	const spans: Span[] = [];
+	let boundary = false;
 	for (const sample of samples) {
-		if (sample.activityKey === "") {
+		if (sample.activityKey === "" || sample.coverageSeconds <= 0) {
+			boundary = true;
 			continue;
 		}
 		const current = spans.at(-1);
 		const continuesCurrent =
+			!boundary &&
 			current !== undefined &&
 			current.activityKey === sample.activityKey &&
-			Math.round(
-				(sample.occurredAt.getTime() - current.endedAt.getTime()) / 1000,
-			) <= options.maxSampleGapSeconds;
+			sample.occurredAt.getTime() - current.endedAt.getTime() <= 2000;
+		boundary = false;
 		const sampleEndedAt = new Date(
 			sample.occurredAt.getTime() + sample.coverageSeconds * 1000,
 		);
@@ -157,53 +149,6 @@ function groupSamplesIntoSpans(
 		});
 	}
 	return spans;
-}
-
-function absorbShortInterruptions(
-	spans: Span[],
-	options: SegmentationOptions,
-): Span[] {
-	const merged: Span[] = [];
-	let index = 0;
-	while (index < spans.length) {
-		const current = spans[index];
-		if (!current) {
-			break;
-		}
-		const previous = merged.at(-1);
-		const next = spans[index + 1];
-		const bridgesBackToPrevious =
-			previous !== undefined &&
-			next !== undefined &&
-			previous.activityKey === next.activityKey &&
-			spanDurationSeconds(current) < options.absorbNoiseSeconds &&
-			gapSecondsBetween(previous, current) <= options.maxSampleGapSeconds &&
-			gapSecondsBetween(current, next) <= options.maxSampleGapSeconds;
-		if (bridgesBackToPrevious && previous && next) {
-			previous.samples.push(
-				...current.samples.filter(
-					(sample) => sample.activityKey === previous.activityKey,
-				),
-				...next.samples,
-			);
-			previous.endedAt = next.endedAt;
-			index += 2;
-			continue;
-		}
-		const continuesPrevious =
-			previous !== undefined &&
-			previous.activityKey === current.activityKey &&
-			gapSecondsBetween(previous, current) <= options.maxSampleGapSeconds;
-		if (continuesPrevious && previous) {
-			previous.samples.push(...current.samples);
-			previous.endedAt = current.endedAt;
-			index += 1;
-			continue;
-		}
-		merged.push({ ...current, samples: [...current.samples] });
-		index += 1;
-	}
-	return merged;
 }
 
 function pickRepresentativeWindowTitle(
@@ -250,13 +195,26 @@ export function segmentRawEvents(
 	options: SegmentationOptions = DEFAULT_SEGMENTATION_OPTIONS,
 ): SegmentedSession[] {
 	const ordered = [...events].sort(
-		(left, right) => left.occurredAt.getTime() - right.occurredAt.getTime(),
+		(left, right) =>
+			left.occurredAt.getTime() - right.occurredAt.getTime() ||
+			Number(right.source === EVENT_SOURCE.OS) -
+				Number(left.source === EVENT_SOURCE.OS) ||
+			Number(right.isIdle) - Number(left.isIdle) ||
+			buildActivityKey({ ...left, appName: left.appName ?? "" }).localeCompare(
+				buildActivityKey({ ...right, appName: right.appName ?? "" }),
+			),
 	);
-	const samples = toActivitySamples(ordered, options);
-	const spans = absorbShortInterruptions(
-		groupSamplesIntoSpans(samples, options),
-		options,
+	const observations = ordered.filter(
+		(event) => event.source !== EVENT_SOURCE.GIT,
 	);
+	const unique = observations.filter(
+		(event, index) =>
+			index === 0 ||
+			observations[index - 1]?.occurredAt.getTime() !==
+				event.occurredAt.getTime(),
+	);
+	const samples = toActivitySamples(unique, options);
+	const spans = groupSamplesIntoSpans(samples);
 
 	return spans
 		.filter(

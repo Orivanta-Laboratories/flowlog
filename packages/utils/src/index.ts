@@ -2,6 +2,7 @@ export * from "./device/token";
 export * from "./errors";
 export * from "./labeling/ai";
 export * from "./labeling/fingerprint";
+export * from "./labeling/grouping";
 export * from "./labeling/rules";
 export * from "./labeling/suggest";
 export * from "./privacy/redaction";
