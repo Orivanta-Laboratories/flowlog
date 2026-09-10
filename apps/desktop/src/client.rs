@@ -12,6 +12,7 @@ pub struct ServerClient {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct DeviceConfigResponse {
     excluded_app_names: Vec<String>,
     excluded_title_patterns: Vec<String>,

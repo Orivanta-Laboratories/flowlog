@@ -6,6 +6,7 @@ import { activitySessionRouter } from "./activitysession";
 import { deviceRouter } from "./device";
 import { exportRouter } from "./export";
 import { matchingRuleRouter } from "./matchingrule";
+import { organizationRouter } from "./organization";
 import { projectRouter } from "./project";
 
 export const appRouter = {
@@ -23,6 +24,7 @@ export const appRouter = {
 	device: deviceRouter,
 	export: exportRouter,
 	matchingrule: matchingRuleRouter,
+	organization: organizationRouter,
 	project: projectRouter,
 };
 export type AppRouter = typeof appRouter;

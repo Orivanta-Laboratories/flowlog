@@ -8,12 +8,20 @@ const currentTitle = document.getElementById("current-title");
 const queuedCount = document.getElementById("queued-count");
 const lastSync = document.getElementById("last-sync");
 const togglePauseButton = document.getElementById("toggle-pause");
+const settingsCard = document.getElementById("settings-card");
 const serverUrlInput = document.getElementById("server-url");
 const deviceTokenInput = document.getElementById("device-token");
 const saveConfigButton = document.getElementById("save-config");
 const settingsStatus = document.getElementById("settings-status");
 
+let hasSetInitialSettingsOpenState = false;
+
 function renderStatus(status) {
+	if (!hasSetInitialSettingsOpenState) {
+		settingsCard.open = !status.paired;
+		hasSetInitialSettingsOpenState = true;
+	}
+
 	if (!status.paired) {
 		statusDot.dataset.state = "unpaired";
 		statusText.textContent = "Not connected";
@@ -25,7 +33,9 @@ function renderStatus(status) {
 		statusText.textContent = "Tracking";
 	}
 
-	togglePauseButton.textContent = status.paused ? "Resume tracking" : "Pause tracking";
+	togglePauseButton.textContent = status.paused
+		? "Resume tracking"
+		: "Pause tracking";
 	togglePauseButton.disabled = !status.paired;
 
 	if (status.is_idle) {
@@ -41,7 +51,9 @@ function renderStatus(status) {
 	if (status.last_flush_succeeded === true) {
 		lastSync.textContent = "Just now";
 	} else if (status.last_flush_succeeded === false) {
-		lastSync.textContent = status.last_error ? `Failed: ${status.last_error}` : "Failed";
+		lastSync.textContent = status.last_error
+			? `Failed: ${status.last_error}`
+			: "Failed";
 	} else {
 		lastSync.textContent = "—";
 	}

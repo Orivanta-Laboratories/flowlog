@@ -5,6 +5,7 @@ const NOT_FOUND_CODES = new Set([
 	"ACTIVITY_SESSION_NOT_FOUND",
 	"MATCHING_RULE_NOT_FOUND",
 	"DEVICE_NOT_FOUND",
+	"ORGANIZATION_NOT_FOUND",
 ]);
 
 const CONFLICT_CODES = new Set([
@@ -19,6 +20,8 @@ const BAD_REQUEST_CODES = new Set([
 	"AI_LABELING_NOT_CONSENTED",
 	"AI_LABELING_UNAVAILABLE",
 ]);
+
+const FORBIDDEN_CODES = new Set(["ORGANIZATION_OWNER_ONLY"]);
 
 export function toDomainOrpcError(
 	error: unknown,
@@ -41,6 +44,9 @@ export function toDomainOrpcError(
 	}
 	if (BAD_REQUEST_CODES.has(error.code)) {
 		return new ORPCError(error.code, { status: 400, message: error.message });
+	}
+	if (FORBIDDEN_CODES.has(error.code)) {
+		return new ORPCError(error.code, { status: 403, message: error.message });
 	}
 	return null;
 }

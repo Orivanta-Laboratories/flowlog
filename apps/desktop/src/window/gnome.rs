@@ -3,6 +3,10 @@ use zbus::Connection;
 
 use super::WindowSnapshot;
 
+const EXTENSION_DEST: &str = "com.orivanta.FlowlogWindowTracker";
+const EXTENSION_PATH: &str = "/com/orivanta/FlowlogWindowTracker";
+const EXTENSION_INTERFACE: &str = "com.orivanta.FlowlogWindowTracker";
+
 const SHELL_DEST: &str = "org.gnome.Shell";
 const SHELL_PATH: &str = "/org/gnome/Shell";
 const SHELL_INTERFACE: &str = "org.gnome.Shell";
@@ -70,6 +74,55 @@ impl GnomeShellWatcher {
         Some(WindowSnapshot {
             app_name: focused.wm_class,
             window_title: focused.title,
+        })
+    }
+}
+
+/// Talks to the flowlog-window-tracker GNOME Shell extension, which the user
+/// installs and enables explicitly. This is the only strategy that works on
+/// a stock GNOME Wayland session without enabling Shell's unsafe mode: code
+/// running inside the Shell itself isn't subject to the same D-Bus security
+/// boundary as `GnomeShellWatcher`'s `Eval` call.
+pub struct ExtensionWindowWatcher {
+    connection: Option<Connection>,
+}
+
+impl ExtensionWindowWatcher {
+    pub async fn connect() -> Self {
+        match Connection::session().await {
+            Ok(connection) => Self {
+                connection: Some(connection),
+            },
+            Err(error) => {
+                debug!(%error, "could not open a D-Bus session connection for the window tracker extension");
+                Self { connection: None }
+            }
+        }
+    }
+
+    pub async fn active_window(&self) -> Option<WindowSnapshot> {
+        let connection = self.connection.as_ref()?;
+        let (title, wm_class): (String, String) = connection
+            .call_method(
+                Some(EXTENSION_DEST),
+                EXTENSION_PATH,
+                Some(EXTENSION_INTERFACE),
+                "GetFocusedWindow",
+                &(),
+            )
+            .await
+            .ok()?
+            .body()
+            .deserialize()
+            .ok()?;
+
+        if title.is_empty() && wm_class.is_empty() {
+            return None;
+        }
+
+        Some(WindowSnapshot {
+            app_name: if wm_class.is_empty() { None } else { Some(wm_class) },
+            window_title: if title.is_empty() { None } else { Some(title) },
         })
     }
 }

@@ -118,3 +118,29 @@ export const PROJECT_COLOR_VALUES = [
 	PROJECT_COLOR.CHART_4,
 	PROJECT_COLOR.CHART_5,
 ] as const;
+
+export const ORG_ROLE = {
+	OWNER: "owner",
+	MEMBER: "member",
+} as const;
+
+export type OrgRole = (typeof ORG_ROLE)[keyof typeof ORG_ROLE];
+
+export const ORG_ROLE_VALUES = [ORG_ROLE.OWNER, ORG_ROLE.MEMBER] as const;
+
+export const INVITATION_STATUS = {
+	PENDING: "pending",
+	ACCEPTED: "accepted",
+	REJECTED: "rejected",
+	CANCELED: "canceled",
+} as const;
+
+export type InvitationStatus =
+	(typeof INVITATION_STATUS)[keyof typeof INVITATION_STATUS];
+
+export const INVITATION_STATUS_VALUES = [
+	INVITATION_STATUS.PENDING,
+	INVITATION_STATUS.ACCEPTED,
+	INVITATION_STATUS.REJECTED,
+	INVITATION_STATUS.CANCELED,
+] as const;

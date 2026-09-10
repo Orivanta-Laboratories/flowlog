@@ -10,6 +10,7 @@ import UserMenu from "./user-menu";
 const LINKS = [
 	{ to: "/dashboard", label: "Dashboard" },
 	{ to: "/projects", label: "Projects" },
+	{ to: "/team", label: "Team" },
 	{ to: "/devices", label: "Devices" },
 	{ to: "/settings", label: "Settings" },
 	{ to: "/ai", label: "AI Chat" },

@@ -8,6 +8,7 @@ pub struct WindowSnapshot {
 }
 
 pub struct WindowWatcher {
+    extension: gnome::ExtensionWindowWatcher,
     gnome: gnome::GnomeShellWatcher,
     idle: gnome::MutterIdleMonitor,
 }
@@ -15,12 +16,16 @@ pub struct WindowWatcher {
 impl WindowWatcher {
     pub async fn connect() -> Self {
         Self {
+            extension: gnome::ExtensionWindowWatcher::connect().await,
             gnome: gnome::GnomeShellWatcher::connect().await,
             idle: gnome::MutterIdleMonitor::connect().await,
         }
     }
 
     pub async fn active_window(&self) -> WindowSnapshot {
+        if let Some(snapshot) = self.extension.active_window().await {
+            return snapshot;
+        }
         if let Some(snapshot) = self.gnome.active_window().await {
             return snapshot;
         }

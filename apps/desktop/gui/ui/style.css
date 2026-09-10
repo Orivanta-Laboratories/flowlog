@@ -122,6 +122,16 @@ h2 {
 	font-weight: 600;
 }
 
+#settings-card summary {
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+#settings-card[open] summary {
+	margin-bottom: 10px;
+}
+
 label {
 	display: block;
 	color: var(--muted-foreground);

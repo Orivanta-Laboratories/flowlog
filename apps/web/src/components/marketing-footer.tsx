@@ -14,7 +14,7 @@ const ACCOUNT_LINKS = [
 export default function MarketingFooter() {
 	return (
 		<footer className="border-border border-t">
-			<div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-[1.5fr_1fr_1fr]">
+			<div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-[1.5fr_1fr_1fr_1fr]">
 				<div>
 					<p className="mb-2 font-semibold text-sm tracking-tight">Flowlog</p>
 					<p className="max-w-xs text-muted-foreground text-sm">
@@ -50,6 +50,27 @@ export default function MarketingFooter() {
 								</Link>
 							</li>
 						))}
+					</ul>
+				</div>
+				<div>
+					<p className="mb-3 font-medium text-sm">Legal</p>
+					<ul className="space-y-2 text-muted-foreground text-sm">
+						<li>
+							<Link
+								href="/privacy"
+								className="transition-colors hover:text-foreground"
+							>
+								Privacy Policy
+							</Link>
+						</li>
+						<li>
+							<Link
+								href="/terms"
+								className="transition-colors hover:text-foreground"
+							>
+								Terms of Service
+							</Link>
+						</li>
 					</ul>
 				</div>
 			</div>

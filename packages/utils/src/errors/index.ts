@@ -86,6 +86,20 @@ export class ExportRangeTooLargeError extends Error {
 	}
 }
 
+export class OrganizationNotFoundError extends Error {
+	readonly code = "ORGANIZATION_NOT_FOUND";
+	constructor() {
+		super("This account does not belong to an organization yet.");
+	}
+}
+
+export class OrganizationOwnerOnlyError extends Error {
+	readonly code = "ORGANIZATION_OWNER_ONLY";
+	constructor() {
+		super("Only the organization owner can view this.");
+	}
+}
+
 export type FlowlogError =
 	| ProjectNotFoundError
 	| ProjectNameTakenError
@@ -98,6 +112,8 @@ export type FlowlogError =
 	| DeviceTokenInvalidError
 	| AiLabelingNotConsentedError
 	| AiLabelingUnavailableError
-	| ExportRangeTooLargeError;
+	| ExportRangeTooLargeError
+	| OrganizationNotFoundError
+	| OrganizationOwnerOnlyError;
 
 export type FlowlogErrorCode = FlowlogError["code"];
