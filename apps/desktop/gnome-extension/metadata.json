@@ -2,7 +2,7 @@
 	"uuid": "flowlog-window-tracker@orivanta.com",
 	"name": "Flowlog Window Tracker",
 	"description": "Exposes the focused window's title and app id over a local D-Bus service so the Flowlog desktop agent can build your timesheet. Only the Flowlog agent on this machine can read it; nothing here talks to the network.",
-	"shell-version": ["45", "46", "47", "48"],
+	"shell-version": ["45", "46", "47", "48", "49", "50"],
 	"url": "https://github.com/Orivanta-Laboratories/flowlog",
 	"version-name": "0.1.0"
 }

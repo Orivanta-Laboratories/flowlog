@@ -17,12 +17,16 @@ const INTERFACE_XML = `
 export default class FlowlogWindowTrackerExtension extends Extension {
 	enable() {
 		this._dbusImpl = Gio.DBusExportedObject.wrapJSObject(INTERFACE_XML, this);
-		this._dbusImpl.export(Gio.DBus.session, OBJECT_PATH);
+		try {
+			this._dbusImpl.export(Gio.DBus.session, OBJECT_PATH);
+		} catch (error) {
+			console.error(`Failed to export ${OBJECT_PATH}: ${error}`);
+		}
 		this._ownName = Gio.DBus.session.own_name(
 			BUS_NAME,
 			Gio.BusNameOwnerFlags.NONE,
 			null,
-			null,
+			(name) => console.error(`Lost D-Bus name "${name}"`),
 		);
 	}
 

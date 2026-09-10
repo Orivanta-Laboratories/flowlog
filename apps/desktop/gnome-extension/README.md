@@ -50,10 +50,38 @@ of a `ServiceUnknown` D-Bus error.
 
 Written against GNOME Shell 50's extension API (`Extension` base class from
 `resource:///org/gnome/shell/extensions/extension.js`,
-`Gio.DBusExportedObject.wrapJSObject`, `Gio.DBus.session.own_name`), cross
-checked against the real API surface used by this same machine's installed
-`ubuntu-appindicators@ubuntu.com` extension rather than guessed from memory.
-**Not yet verified by an actual enable + reload**, since that requires
-logging out of the desktop session this was written on, which wasn't done
-without asking first. If `GetFocusedWindow` comes back empty or the service
-never appears, that's the first thing to check.
+`Gio.DBusExportedObject.wrapJSObject`, `Gio.DBus.session.own_name`,
+`global.display.focus_window`, `get_wm_class()`), cross checked against the
+real, currently-running D-Bus-exporting extensions on this machine —
+`snapd-prompting@canonical.com`'s `dbusServer.js` for the export/own-name
+shape, and `ubuntu-dock@ubuntu.com`'s `docking.js`/`intellihide.js` for
+`focus_window`/`get_wm_class()` — rather than guessed from memory or stale
+docs.
+
+`metadata.json`'s `shell-version` previously listed only `["45"..."48"]`; on
+this GNOME Shell 50.1 machine that's enough for the Shell to silently never
+register the extension at all. Confirmed via `busctl --user call
+org.gnome.Shell.Extensions … GetExtensionInfo` returning an empty dict and
+`ListExtensions` omitting the UUID entirely, even after copying the files in.
+Fixed by adding `"49"` and `"50"` (matching what every other real extension
+installed on this machine declares).
+
+`gjs -m extension.js` confirms the file parses as a valid ES module (it
+fails only on resolving `resource:///org/gnome/shell/...`, which doesn't
+exist outside a running Shell process — expected, not a syntax error).
+
+**Still not verified by an actual enable + reload.** On this GNOME Shell
+50.1 build there is no way to get the Shell to notice a newly-installed
+extension short of a full session logout/login — confirmed directly, not
+assumed:
+
+- `GetExtensionInfo("flowlog-window-tracker@orivanta.com")` → empty `a{sv}`
+- `ListExtensions()` → does not include the UUID
+- `EnableExtension("flowlog-window-tracker@orivanta.com")` → `false`
+- `ReloadExtension(...)` → `Method ReloadExtension is not implemented`, and
+  this is true for *any* UUID, including already-loaded extensions, so it's
+  a dead end on this GNOME version generally, not specific to this extension
+
+If `GetFocusedWindow` comes back empty or the service never appears after
+logging back in, that's the first thing to check next — but the code and
+metadata issues found during this pass are fixed.
