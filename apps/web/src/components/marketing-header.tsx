@@ -3,6 +3,7 @@
 import { Button } from "@flowlog/ui/components/button";
 import { Skeleton } from "@flowlog/ui/components/skeleton";
 import Link from "next/link";
+import * as React from "react";
 
 import { authClient } from "@/lib/auth-client";
 
@@ -16,6 +17,11 @@ const NAV_LINKS = [
 
 export default function MarketingHeader() {
 	const { data: session, isPending } = authClient.useSession();
+	const [mounted, setMounted] = React.useState(false);
+
+	React.useEffect(() => {
+		setMounted(true);
+	}, []);
 
 	return (
 		<header className="border-border border-b bg-background">
@@ -40,12 +46,13 @@ export default function MarketingHeader() {
 				</nav>
 
 				<div className="flex items-center gap-3">
-					<ModeToggle />
-					{isPending ? (
+					<ModeToggle className="rounded-full" />
+					{!mounted || isPending ? (
 						<Skeleton className="h-9 w-28 rounded-full" />
 					) : session ? (
 						<Button
 							render={<Link href="/dashboard" />}
+							nativeButton={false}
 							className="rounded-full"
 							size="sm"
 						>
@@ -55,6 +62,7 @@ export default function MarketingHeader() {
 						<>
 							<Button
 								render={<Link href="/login" />}
+								nativeButton={false}
 								variant="ghost"
 								size="sm"
 								className="hidden rounded-full sm:inline-flex"
@@ -63,6 +71,7 @@ export default function MarketingHeader() {
 							</Button>
 							<Button
 								render={<Link href="/login" />}
+								nativeButton={false}
 								className="rounded-full"
 								size="sm"
 							>

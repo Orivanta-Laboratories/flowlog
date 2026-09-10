@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-export function ModeToggle() {
+export function ModeToggle({ className }: { className?: string }) {
 	const { resolvedTheme, setTheme } = useTheme();
 	const [mounted, setMounted] = React.useState(false);
 
@@ -19,6 +19,7 @@ export function ModeToggle() {
 		<Button
 			variant="outline"
 			size="icon"
+			className={className}
 			aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
 			onClick={() => setTheme(isDark ? "light" : "dark")}
 		>
