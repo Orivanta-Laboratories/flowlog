@@ -1,4 +1,7 @@
-import { SUGGESTION_SOURCE, type SuggestionSource } from "@flowlog/db/constants";
+import {
+	SUGGESTION_SOURCE,
+	type SuggestionSource,
+} from "@flowlog/db/constants";
 
 import type { ActivitySignals } from "./fingerprint";
 import { findMatchingRule, type MatchingRuleCandidate } from "./rules";
@@ -47,7 +50,9 @@ export function buildRuleSuggestion(
 	};
 }
 
-export function buildHistorySuggestion(match: HistoryMatch | null): LabelSuggestion | null {
+export function buildHistorySuggestion(
+	match: HistoryMatch | null,
+): LabelSuggestion | null {
 	if (match === null) {
 		return null;
 	}
@@ -56,12 +61,16 @@ export function buildHistorySuggestion(match: HistoryMatch | null): LabelSuggest
 		projectId: match.finalProjectId,
 		confidencePercent: HISTORY_CONFIDENCE_PERCENT,
 		source: SUGGESTION_SOURCE.HISTORY,
-		rationale: "You labelled the same app, repository and branch this way before.",
+		rationale:
+			"You labelled the same app, repository and branch this way before.",
 	};
 }
 
 export function isHighConfidence(suggestion: LabelSuggestion | null): boolean {
-	return suggestion !== null && suggestion.confidencePercent >= HIGH_CONFIDENCE_THRESHOLD_PERCENT;
+	return (
+		suggestion !== null &&
+		suggestion.confidencePercent >= HIGH_CONFIDENCE_THRESHOLD_PERCENT
+	);
 }
 
 export function selectLocalSuggestion(
@@ -69,5 +78,7 @@ export function selectLocalSuggestion(
 	rules: readonly MatchingRuleCandidate[],
 	historyMatch: HistoryMatch | null,
 ): LabelSuggestion | null {
-	return buildRuleSuggestion(signals, rules) ?? buildHistorySuggestion(historyMatch);
+	return (
+		buildRuleSuggestion(signals, rules) ?? buildHistorySuggestion(historyMatch)
+	);
 }

@@ -13,6 +13,7 @@ export type SegmentationEvent = {
 
 export type SegmentationOptions = {
 	sampleIntervalSeconds: number;
+	browserSampleIntervalSeconds: number;
 	maxSampleGapSeconds: number;
 	minimumSessionSeconds: number;
 	absorbNoiseSeconds: number;
@@ -48,17 +49,31 @@ type Span = {
 
 export const DEFAULT_SEGMENTATION_OPTIONS: SegmentationOptions = {
 	sampleIntervalSeconds: 15,
+	browserSampleIntervalSeconds: 60,
 	maxSampleGapSeconds: 90,
 	minimumSessionSeconds: 90,
 	absorbNoiseSeconds: 90,
 };
+
+function expectedIntervalSeconds(
+	source: string,
+	options: SegmentationOptions,
+): number {
+	return source === EVENT_SOURCE.BROWSER
+		? options.browserSampleIntervalSeconds
+		: options.sampleIntervalSeconds;
+}
 
 export function buildActivityKey(activity: {
 	appName: string;
 	repoName: string | null;
 	branchName: string | null;
 }): string {
-	return [activity.appName, activity.repoName ?? "", activity.branchName ?? ""].join("|");
+	return [
+		activity.appName,
+		activity.repoName ?? "",
+		activity.branchName ?? "",
+	].join("|");
 }
 
 function spanDurationSeconds(span: Span): number {
@@ -66,7 +81,9 @@ function spanDurationSeconds(span: Span): number {
 }
 
 function gapSecondsBetween(earlier: Span, later: Span): number {
-	return Math.round((later.startedAt.getTime() - earlier.endedAt.getTime()) / 1000);
+	return Math.round(
+		(later.startedAt.getTime() - earlier.endedAt.getTime()) / 1000,
+	);
 }
 
 function toActivitySamples(
@@ -74,22 +91,32 @@ function toActivitySamples(
 	options: SegmentationOptions,
 ): ActivitySample[] {
 	const trackable = events.filter(
-		(event) => event.source === EVENT_SOURCE.OS && event.appName !== null,
+		(event) =>
+			(event.source === EVENT_SOURCE.OS ||
+				event.source === EVENT_SOURCE.BROWSER) &&
+			event.appName !== null,
 	);
 	return trackable.map((event, index) => {
 		const next = trackable[index + 1];
+		const ownIntervalSeconds = expectedIntervalSeconds(event.source, options);
 		const gapSeconds = next
-			? Math.round((next.occurredAt.getTime() - event.occurredAt.getTime()) / 1000)
-			: options.sampleIntervalSeconds;
+			? Math.round(
+					(next.occurredAt.getTime() - event.occurredAt.getTime()) / 1000,
+				)
+			: ownIntervalSeconds;
 		const appName = event.appName ?? "";
 		return {
 			occurredAt: event.occurredAt,
 			coverageSeconds: event.isIdle
 				? 0
-				: Math.max(0, Math.min(options.sampleIntervalSeconds, gapSeconds)),
+				: Math.max(0, Math.min(ownIntervalSeconds, gapSeconds)),
 			activityKey: event.isIdle
 				? ""
-				: buildActivityKey({ appName, repoName: event.repoName, branchName: event.branchName }),
+				: buildActivityKey({
+						appName,
+						repoName: event.repoName,
+						branchName: event.branchName,
+					}),
 			appName,
 			windowTitle: event.windowTitle,
 			repoName: event.repoName,
@@ -111,9 +138,12 @@ function groupSamplesIntoSpans(
 		const continuesCurrent =
 			current !== undefined &&
 			current.activityKey === sample.activityKey &&
-			Math.round((sample.occurredAt.getTime() - current.endedAt.getTime()) / 1000) <=
-				options.maxSampleGapSeconds;
-		const sampleEndedAt = new Date(sample.occurredAt.getTime() + sample.coverageSeconds * 1000);
+			Math.round(
+				(sample.occurredAt.getTime() - current.endedAt.getTime()) / 1000,
+			) <= options.maxSampleGapSeconds;
+		const sampleEndedAt = new Date(
+			sample.occurredAt.getTime() + sample.coverageSeconds * 1000,
+		);
 		if (continuesCurrent && current) {
 			current.samples.push(sample);
 			current.endedAt = sampleEndedAt;
@@ -129,7 +159,10 @@ function groupSamplesIntoSpans(
 	return spans;
 }
 
-function absorbShortInterruptions(spans: Span[], options: SegmentationOptions): Span[] {
+function absorbShortInterruptions(
+	spans: Span[],
+	options: SegmentationOptions,
+): Span[] {
 	const merged: Span[] = [];
 	let index = 0;
 	while (index < spans.length) {
@@ -147,7 +180,12 @@ function absorbShortInterruptions(spans: Span[], options: SegmentationOptions): 
 			gapSecondsBetween(previous, current) <= options.maxSampleGapSeconds &&
 			gapSecondsBetween(current, next) <= options.maxSampleGapSeconds;
 		if (bridgesBackToPrevious && previous && next) {
-			previous.samples.push(...current.samples.filter((sample) => sample.activityKey === previous.activityKey), ...next.samples);
+			previous.samples.push(
+				...current.samples.filter(
+					(sample) => sample.activityKey === previous.activityKey,
+				),
+				...next.samples,
+			);
 			previous.endedAt = next.endedAt;
 			index += 2;
 			continue;
@@ -168,7 +206,9 @@ function absorbShortInterruptions(spans: Span[], options: SegmentationOptions): 
 	return merged;
 }
 
-function pickRepresentativeWindowTitle(samples: ActivitySample[]): string | null {
+function pickRepresentativeWindowTitle(
+	samples: ActivitySample[],
+): string | null {
 	const coverageByTitle = new Map<string, number>();
 	for (const sample of samples) {
 		if (sample.windowTitle === null) {
@@ -176,7 +216,8 @@ function pickRepresentativeWindowTitle(samples: ActivitySample[]): string | null
 		}
 		coverageByTitle.set(
 			sample.windowTitle,
-			(coverageByTitle.get(sample.windowTitle) ?? 0) + Math.max(sample.coverageSeconds, 1),
+			(coverageByTitle.get(sample.windowTitle) ?? 0) +
+				Math.max(sample.coverageSeconds, 1),
 		);
 	}
 	const ranked = [...coverageByTitle.entries()].sort(
@@ -185,7 +226,11 @@ function pickRepresentativeWindowTitle(samples: ActivitySample[]): string | null
 	return ranked[0]?.[0] ?? null;
 }
 
-function collectCommitSubjects(events: SegmentationEvent[], span: Span, repoName: string | null) {
+function collectCommitSubjects(
+	events: SegmentationEvent[],
+	span: Span,
+	repoName: string | null,
+) {
 	return events
 		.filter(
 			(event) =>
@@ -193,7 +238,9 @@ function collectCommitSubjects(events: SegmentationEvent[], span: Span, repoName
 				event.commitSubject !== null &&
 				event.occurredAt >= span.startedAt &&
 				event.occurredAt <= span.endedAt &&
-				(repoName === null || event.repoName === null || event.repoName === repoName),
+				(repoName === null ||
+					event.repoName === null ||
+					event.repoName === repoName),
 		)
 		.map((event) => event.commitSubject as string);
 }
@@ -202,12 +249,19 @@ export function segmentRawEvents(
 	events: SegmentationEvent[],
 	options: SegmentationOptions = DEFAULT_SEGMENTATION_OPTIONS,
 ): SegmentedSession[] {
-	const ordered = [...events].sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime());
+	const ordered = [...events].sort(
+		(left, right) => left.occurredAt.getTime() - right.occurredAt.getTime(),
+	);
 	const samples = toActivitySamples(ordered, options);
-	const spans = absorbShortInterruptions(groupSamplesIntoSpans(samples, options), options);
+	const spans = absorbShortInterruptions(
+		groupSamplesIntoSpans(samples, options),
+		options,
+	);
 
 	return spans
-		.filter((span) => spanDurationSeconds(span) >= options.minimumSessionSeconds)
+		.filter(
+			(span) => spanDurationSeconds(span) >= options.minimumSessionSeconds,
+		)
 		.map((span) => {
 			const anchor = span.samples[0];
 			const repoName = anchor?.repoName ?? null;
@@ -219,7 +273,9 @@ export function segmentRawEvents(
 				windowTitle: pickRepresentativeWindowTitle(span.samples),
 				repoName,
 				branchName: anchor?.branchName ?? null,
-				commitSubjects: [...new Set(collectCommitSubjects(ordered, span, repoName))],
+				commitSubjects: [
+					...new Set(collectCommitSubjects(ordered, span, repoName)),
+				],
 			};
 		});
 }

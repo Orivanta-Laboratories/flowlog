@@ -1,4 +1,9 @@
-import { RULE_FIELD, RULE_OPERATOR, type RuleField, type RuleOperator } from "@flowlog/db/constants";
+import {
+	RULE_FIELD,
+	RULE_OPERATOR,
+	type RuleField,
+	type RuleOperator,
+} from "@flowlog/db/constants";
 
 import { globToRegExp } from "../privacy/redaction";
 import type { ActivitySignals } from "./fingerprint";
@@ -14,7 +19,10 @@ export type MatchingRuleCandidate = {
 	priority: number;
 };
 
-function readSignalField(signals: ActivitySignals, field: RuleField): string | null {
+function readSignalField(
+	signals: ActivitySignals,
+	field: RuleField,
+): string | null {
 	switch (field) {
 		case RULE_FIELD.APP_NAME:
 			return signals.appName;
@@ -27,7 +35,11 @@ function readSignalField(signals: ActivitySignals, field: RuleField): string | n
 	}
 }
 
-function satisfiesOperator(candidateValue: string, ruleValue: string, operator: RuleOperator) {
+function satisfiesOperator(
+	candidateValue: string,
+	ruleValue: string,
+	operator: RuleOperator,
+) {
 	const haystack = candidateValue.toLowerCase();
 	const needle = ruleValue.toLowerCase();
 	switch (operator) {
@@ -40,7 +52,10 @@ function satisfiesOperator(candidateValue: string, ruleValue: string, operator: 
 	}
 }
 
-export function ruleMatchesSignals(rule: MatchingRuleCandidate, signals: ActivitySignals): boolean {
+export function ruleMatchesSignals(
+	rule: MatchingRuleCandidate,
+	signals: ActivitySignals,
+): boolean {
 	const candidateValue = readSignalField(signals, rule.field);
 	if (candidateValue === null || candidateValue === "") {
 		return false;
@@ -54,7 +69,8 @@ export function findMatchingRule(
 ): MatchingRuleCandidate | null {
 	const matches = rules.filter((rule) => ruleMatchesSignals(rule, signals));
 	const ranked = [...matches].sort(
-		(left, right) => right.priority - left.priority || right.value.length - left.value.length,
+		(left, right) =>
+			right.priority - left.priority || right.value.length - left.value.length,
 	);
 	return ranked[0] ?? null;
 }

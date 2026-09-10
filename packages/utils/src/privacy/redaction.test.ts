@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { isExcludedActivity, matchesAnyPattern, redactSensitiveText } from "./redaction";
+import {
+	isExcludedActivity,
+	matchesAnyPattern,
+	redactSensitiveText,
+} from "./redaction";
 
 test("redactSensitiveText removes email addresses", () => {
-	assert.equal(redactSensitiveText("Inbox — ada@example.com"), "Inbox — [redacted]");
+	assert.equal(
+		redactSensitiveText("Inbox — ada@example.com"),
+		"Inbox — [redacted]",
+	);
 });
 
 test("redactSensitiveText keeps the url origin and drops the query string", () => {
@@ -15,7 +22,10 @@ test("redactSensitiveText keeps the url origin and drops the query string", () =
 });
 
 test("redactSensitiveText removes long digit runs such as account numbers", () => {
-	assert.equal(redactSensitiveText("Statement 4929123456789"), "Statement [redacted]");
+	assert.equal(
+		redactSensitiveText("Statement 4929123456789"),
+		"Statement [redacted]",
+	);
 });
 
 test("redactSensitiveText removes credential-looking key value pairs", () => {
@@ -40,7 +50,10 @@ test("matchesAnyPattern supports wildcards and is case insensitive", () => {
 });
 
 test("isExcludedActivity excludes on app name and on window title", () => {
-	const exclusions = { appNames: ["1Password"], titlePatterns: ["*online banking*"] };
+	const exclusions = {
+		appNames: ["1Password"],
+		titlePatterns: ["*online banking*"],
+	};
 	assert.equal(
 		isExcludedActivity({ appName: "1Password", windowTitle: null }, exclusions),
 		true,
@@ -53,7 +66,10 @@ test("isExcludedActivity excludes on app name and on window title", () => {
 		true,
 	);
 	assert.equal(
-		isExcludedActivity({ appName: "Firefox", windowTitle: "Docs — MDN" }, exclusions),
+		isExcludedActivity(
+			{ appName: "Firefox", windowTitle: "Docs — MDN" },
+			exclusions,
+		),
 		false,
 	);
 });

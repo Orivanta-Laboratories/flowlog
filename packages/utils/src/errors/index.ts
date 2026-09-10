@@ -15,7 +15,9 @@ export class ProjectNameTakenError extends Error {
 export class ActivitySessionNotFoundError extends Error {
 	readonly code = "ACTIVITY_SESSION_NOT_FOUND";
 	constructor(activitySessionId: string) {
-		super(`Activity session ${activitySessionId} could not be located for this account.`);
+		super(
+			`Activity session ${activitySessionId} could not be located for this account.`,
+		);
 	}
 }
 
@@ -43,7 +45,9 @@ export class ActivitySessionSplitOutOfRangeError extends Error {
 export class MatchingRuleNotFoundError extends Error {
 	readonly code = "MATCHING_RULE_NOT_FOUND";
 	constructor(matchingRuleId: string) {
-		super(`Matching rule ${matchingRuleId} could not be located for this account.`);
+		super(
+			`Matching rule ${matchingRuleId} could not be located for this account.`,
+		);
 	}
 }
 

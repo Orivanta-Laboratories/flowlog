@@ -1,6 +1,7 @@
 const EMAIL_PATTERN = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 const URL_QUERY_PATTERN = /(https?:\/\/[^\s?#]+)[?#][^\s]*/g;
-const BEARER_PATTERN = /\b(?:bearer|token|api[_-]?key|secret|password)\b[:=]?\s*\S+/gi;
+const BEARER_PATTERN =
+	/\b(?:bearer|token|api[_-]?key|secret|password)\b[:=]?\s*\S+/gi;
 const LONG_DIGIT_PATTERN = /\b\d{6,}\b/g;
 const REDACTION_MARK = "[redacted]";
 
@@ -16,16 +17,24 @@ export function redactSensitiveText(value: string | null): string | null {
 		.trim();
 }
 
-export function matchesAnyPattern(value: string, patterns: readonly string[]): boolean {
+export function matchesAnyPattern(
+	value: string,
+	patterns: readonly string[],
+): boolean {
 	const haystack = value.toLowerCase();
 	return patterns.some((pattern) => {
 		const needle = pattern.toLowerCase();
-		return needle.includes("*") ? globToRegExp(needle).test(haystack) : haystack.includes(needle);
+		return needle.includes("*")
+			? globToRegExp(needle).test(haystack)
+			: haystack.includes(needle);
 	});
 }
 
 export function globToRegExp(pattern: string): RegExp {
-	const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
+	const escaped = pattern
+		.replace(/[.+^${}()|[\]\\]/g, "\\$&")
+		.replace(/\*/g, ".*")
+		.replace(/\?/g, ".");
 	return new RegExp(`^${escaped}$`);
 }
 
@@ -33,7 +42,10 @@ export function isExcludedActivity(
 	activity: { appName: string | null; windowTitle: string | null },
 	exclusions: { appNames: readonly string[]; titlePatterns: readonly string[] },
 ): boolean {
-	if (activity.appName !== null && matchesAnyPattern(activity.appName, exclusions.appNames)) {
+	if (
+		activity.appName !== null &&
+		matchesAnyPattern(activity.appName, exclusions.appNames)
+	) {
 		return true;
 	}
 	if (
