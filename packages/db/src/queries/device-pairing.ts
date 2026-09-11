@@ -30,13 +30,9 @@ export async function findPairingRequestStatus(id: string, tokenHash: string) {
 		.select({
 			status: devicePairingRequest.status,
 			expiresAt: devicePairingRequest.expiresAt,
-			deviceId: device.id,
+			deviceId: devicePairingRequest.deviceId,
 		})
 		.from(devicePairingRequest)
-		.leftJoin(
-			device,
-			and(eq(device.id, devicePairingRequest.id), isNull(device.revokedAt)),
-		)
 		.where(
 			and(
 				eq(devicePairingRequest.id, id),
@@ -45,7 +41,20 @@ export async function findPairingRequestStatus(id: string, tokenHash: string) {
 			),
 		)
 		.limit(1);
-	return row ?? null;
+	if (row === undefined) return null;
+	if (row.deviceId === null) return row;
+	const [activeDevice] = await db
+		.select({ id: device.id })
+		.from(device)
+		.where(
+			and(
+				eq(device.id, row.deviceId),
+				eq(device.tokenHash, tokenHash),
+				isNull(device.revokedAt),
+			),
+		)
+		.limit(1);
+	return activeDevice === undefined ? { ...row, deviceId: null } : row;
 }
 
 export async function findPendingPairingRequest(id: string) {
@@ -77,14 +86,16 @@ export async function approvePairingRequest(
 	}>(sql`
 		WITH approved AS (
 			UPDATE device_pairing_request
-			SET status = ${PAIRING_REQUEST_STATUS.APPROVED}, user_id = ${userId}
+			SET status = ${PAIRING_REQUEST_STATUS.APPROVED}, user_id = ${userId}, device_id = id
 			WHERE id = ${id} AND status = ${PAIRING_REQUEST_STATUS.PENDING}
 			AND expires_at > now() AND token_hash IS NOT NULL AND token_preview IS NOT NULL
 			RETURNING id, platform, token_hash, token_preview
+		), created AS (
+			INSERT INTO device (id, user_id, name, platform, token_hash, token_preview)
+			SELECT id, ${userId}, ${name}, platform, token_hash, token_preview FROM approved
+			RETURNING id, name AS "deviceName", platform
 		)
-		INSERT INTO device (id, user_id, name, platform, token_hash, token_preview)
-		SELECT id, ${userId}, ${name}, platform, token_hash, token_preview FROM approved
-		RETURNING name AS "deviceName", platform
+		SELECT "deviceName", platform FROM created
 	`);
 	return result.rows[0] ?? null;
 }
