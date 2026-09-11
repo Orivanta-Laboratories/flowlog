@@ -117,7 +117,7 @@ export function AppSidebar() {
 											<SidebarMenuButton
 												isActive={isActive}
 												tooltip={item.label}
-												className="h-auto py-2"
+												className="h-auto rounded-lg py-3"
 												render={
 													<Link
 														href={item.href}
@@ -127,10 +127,10 @@ export function AppSidebar() {
 											>
 												<item.icon aria-hidden="true" />
 												<span className="flex min-w-0 flex-col">
-													<span className="truncate font-medium">
+													<span className="truncate font-medium text-sm">
 														{item.label}
 													</span>
-													<span className="truncate text-muted-foreground text-xs group-data-[collapsible=icon]:hidden">
+													<span className="truncate text-muted-foreground text-sm group-data-[collapsible=icon]:hidden">
 														{item.description}
 													</span>
 												</span>

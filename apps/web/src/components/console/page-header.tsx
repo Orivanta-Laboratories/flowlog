@@ -8,13 +8,13 @@ export function PageHeader({
 	actions?: React.ReactNode;
 }) {
 	return (
-		<div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+		<div className="mb-8 flex flex-wrap items-start justify-between gap-5">
 			<div className="min-w-0">
-				<h1 className="cn-font-heading font-semibold text-foreground text-xl">
+				<h1 className="cn-font-heading font-semibold text-3xl text-foreground tracking-tight">
 					{title}
 				</h1>
 				{description !== undefined && (
-					<p className="mt-1 max-w-prose text-pretty text-muted-foreground text-sm">
+					<p className="mt-2 max-w-2xl text-pretty text-base text-muted-foreground leading-7">
 						{description}
 					</p>
 				)}

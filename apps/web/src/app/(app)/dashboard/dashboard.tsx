@@ -96,11 +96,16 @@ function DaySummary({ rows }: { rows: ActivitySessionRow[] }) {
 	];
 
 	return (
-		<dl className="mb-4 grid grid-cols-1 gap-px overflow-hidden bg-border ring-1 ring-border sm:grid-cols-3">
+		<dl className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
 			{stats.map((stat) => (
-				<div key={stat.label} className="bg-card px-4 py-3">
-					<dt className="text-muted-foreground text-xs">{stat.label}</dt>
-					<dd className="cn-font-heading mt-0.5 font-semibold text-lg tabular-nums">
+				<div
+					key={stat.label}
+					className="rounded-xl bg-card px-5 py-5 shadow-sm ring-1 ring-foreground/10"
+				>
+					<dt className="font-medium text-muted-foreground text-sm">
+						{stat.label}
+					</dt>
+					<dd className="cn-font-heading mt-1 font-semibold text-2xl tabular-nums">
 						{stat.value}
 					</dd>
 				</div>
@@ -175,7 +180,7 @@ function ReviewRow({
 	return (
 		<li
 			className={cn(
-				"grid gap-3 bg-card px-4 py-3 transition-colors duration-200 ease-fluid",
+				"grid gap-4 border-border/70 border-b bg-card px-5 py-5 transition-colors duration-200 ease-fluid last:border-b-0",
 				"sm:grid-cols-[auto_10rem_1fr] sm:items-start",
 				selected && "bg-accent/40",
 				confirmed && "bg-muted/40",
@@ -194,10 +199,10 @@ function ReviewRow({
 			</div>
 
 			<div className="hidden sm:block sm:pt-0.5">
-				<p className="font-medium text-sm tabular-nums">
+				<p className="font-medium text-base tabular-nums">
 					{formatClockTime(row.startedAt)}–{formatClockTime(row.endedAt)}
 				</p>
-				<p className="text-muted-foreground text-xs tabular-nums">
+				<p className="text-muted-foreground text-sm tabular-nums">
 					{formatDurationLabel(row.durationSeconds)}
 				</p>
 			</div>
@@ -205,7 +210,7 @@ function ReviewRow({
 			<div className="min-w-0">
 				<div className="mb-2 flex flex-wrap items-center gap-2">
 					<p
-						className="min-w-0 truncate font-mono text-muted-foreground text-xs"
+						className="min-w-0 truncate font-mono text-muted-foreground text-sm"
 						title={context}
 					>
 						{context}
@@ -283,7 +288,7 @@ function ReviewRow({
 					</div>
 
 					{confirmed ? (
-						<p className="text-muted-foreground text-xs sm:pb-2">
+						<p className="text-muted-foreground text-sm sm:pb-2">
 							You confirmed this
 						</p>
 					) : (
@@ -537,7 +542,7 @@ export default function Dashboard({
 						</div>
 					)}
 
-					<ul className="space-y-px overflow-hidden ring-1 ring-border">
+					<ul className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
 						{rows.map((row) => (
 							<ReviewRow
 								key={row.id}
