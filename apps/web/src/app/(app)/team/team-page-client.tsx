@@ -4,8 +4,17 @@ import { INVITATION_STATUS, ORG_ROLE } from "@flowlog/db/constants";
 import { Badge } from "@flowlog/ui/components/badge";
 import { Button } from "@flowlog/ui/components/button";
 import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@flowlog/ui/components/card";
+import {
 	Empty,
 	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
 	EmptyTitle,
 } from "@flowlog/ui/components/empty";
 import { Input } from "@flowlog/ui/components/input";
@@ -19,6 +28,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@flowlog/ui/components/table";
+import { MailCheck, Users } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -59,25 +69,36 @@ function InviteMemberForm({ onInvited }: { onInvited: () => void }) {
 	}
 
 	return (
-		<form
-			onSubmit={handleSubmit}
-			className="mb-8 grid gap-3 rounded-md border p-4 sm:grid-cols-[1fr_auto] sm:items-end"
-		>
-			<div>
-				<Label htmlFor="invite-email">Invite a teammate</Label>
-				<Input
-					id="invite-email"
-					type="email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					placeholder="teammate@example.com"
-					required
-				/>
-			</div>
-			<Button type="submit" disabled={isSubmitting} className="w-fit">
-				Send invitation
-			</Button>
-		</form>
+		<Card>
+			<CardHeader>
+				<CardTitle>Invite a teammate</CardTitle>
+				<CardDescription>
+					They'll join this organization as a member and see only their own
+					tracked time.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<form
+					onSubmit={handleSubmit}
+					className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
+				>
+					<div className="grid gap-1.5">
+						<Label htmlFor="invite-email">Email address</Label>
+						<Input
+							id="invite-email"
+							type="email"
+							value={email}
+							onChange={(event) => setEmail(event.target.value)}
+							placeholder="teammate@example.com"
+							required
+						/>
+					</div>
+					<Button type="submit" disabled={isSubmitting} className="w-fit">
+						Send invitation
+					</Button>
+				</form>
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -113,15 +134,22 @@ function PendingInvitations({
 	}
 
 	return (
-		<div className="mb-8">
-			<h2 className="mb-2 font-medium text-base">Pending invitations</h2>
-			<ul className="divide-y rounded-md border">
+		<section>
+			<h2 className="cn-font-heading mb-3 font-medium text-base">
+				Pending invitations
+			</h2>
+			<ul className="space-y-px overflow-hidden ring-1 ring-border">
 				{pending.map((invitation) => (
 					<li
 						key={invitation.id}
-						className="flex items-center justify-between px-4 py-2 text-sm"
+						className="flex flex-wrap items-center gap-3 bg-card px-4 py-3 text-sm"
 					>
-						<span>{invitation.email}</span>
+						<MailCheck
+							className="size-4 shrink-0 text-muted-foreground"
+							aria-hidden="true"
+						/>
+						<span className="min-w-0 flex-1 truncate">{invitation.email}</span>
+						<Badge variant="outline">Awaiting reply</Badge>
 						<Button
 							variant="ghost"
 							size="sm"
@@ -133,7 +161,7 @@ function PendingInvitations({
 					</li>
 				))}
 			</ul>
-		</div>
+		</section>
 	);
 }
 
@@ -141,59 +169,83 @@ function MembersTable() {
 	const trackedTime = useOrganizationTrackedTime(TRACKED_TIME_DAYS);
 
 	if (trackedTime.isPending) {
-		return <Skeleton className="h-32 w-full" />;
+		return (
+			<Skeleton
+				role="status"
+				className="h-32 w-full"
+				aria-label="Loading members"
+			/>
+		);
 	}
 
 	if (trackedTime.isError) {
 		return (
-			<p className="text-destructive text-sm">{trackedTime.error.message}</p>
+			<p role="alert" className="text-destructive text-sm">
+				{trackedTime.error.message}
+			</p>
 		);
 	}
 
 	if (trackedTime.data.length === 0) {
 		return (
-			<Empty className="mb-8">
-				<EmptyTitle>No members yet</EmptyTitle>
-				<EmptyDescription>
-					Invite a teammate above to get started.
-				</EmptyDescription>
+			<Empty className="ring-1 ring-border">
+				<EmptyHeader>
+					<EmptyMedia variant="icon">
+						<Users aria-hidden="true" />
+					</EmptyMedia>
+					<EmptyTitle>No members yet</EmptyTitle>
+					<EmptyDescription>
+						Invite a teammate above and they'll appear here once they accept.
+					</EmptyDescription>
+				</EmptyHeader>
 			</Empty>
 		);
 	}
 
 	return (
-		<Table>
-			<TableHeader>
-				<TableRow>
-					<TableHead>Name</TableHead>
-					<TableHead>Email</TableHead>
-					<TableHead>Role</TableHead>
-					<TableHead>Tracked ({TRACKED_TIME_DAYS}d)</TableHead>
-					<TableHead>Joined</TableHead>
-				</TableRow>
-			</TableHeader>
-			<TableBody>
-				{trackedTime.data.map((member) => (
-					<TableRow key={member.memberId}>
-						<TableCell className="font-medium">{member.name}</TableCell>
-						<TableCell className="text-muted-foreground">
-							{member.email}
-						</TableCell>
-						<TableCell>
-							<Badge
-								variant={member.role === ORG_ROLE.OWNER ? "default" : "outline"}
-							>
-								{member.role}
-							</Badge>
-						</TableCell>
-						<TableCell>{formatDurationLabel(member.trackedSeconds)}</TableCell>
-						<TableCell className="text-muted-foreground">
-							{new Date(member.joinedAt).toLocaleDateString()}
-						</TableCell>
+		<div className="overflow-hidden ring-1 ring-border">
+			<Table>
+				<TableHeader>
+					<TableRow className="bg-muted/50">
+						<TableHead className="px-4">Name</TableHead>
+						<TableHead>Role</TableHead>
+						<TableHead className="text-right">
+							Confirmed, last {TRACKED_TIME_DAYS} days
+						</TableHead>
+						<TableHead className="px-4 text-right">Joined</TableHead>
 					</TableRow>
-				))}
-			</TableBody>
-		</Table>
+				</TableHeader>
+				<TableBody>
+					{trackedTime.data.map((member) => (
+						<TableRow key={member.memberId}>
+							<TableCell className="px-4">
+								<p className="font-medium">{member.name}</p>
+								<p className="text-muted-foreground">{member.email}</p>
+							</TableCell>
+							<TableCell>
+								<Badge
+									variant={
+										member.role === ORG_ROLE.OWNER ? "default" : "outline"
+									}
+								>
+									{member.role === ORG_ROLE.OWNER ? "Owner" : "Member"}
+								</Badge>
+							</TableCell>
+							<TableCell className="text-right tabular-nums">
+								{formatDurationLabel(member.trackedSeconds)}
+							</TableCell>
+							<TableCell className="px-4 text-right text-muted-foreground tabular-nums">
+								{new Date(member.joinedAt).toLocaleDateString(undefined, {
+									month: "short",
+									day: "numeric",
+									year: "numeric",
+								})}
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</div>
 	);
 }
 
@@ -201,19 +253,32 @@ function OrgHeatmapSection() {
 	const heatmap = useOrganizationHeatmap(HEATMAP_DAYS);
 
 	return (
-		<div className="mb-8">
-			<h2 className="mb-1 font-medium text-base">Activity</h2>
-			<p className="mb-4 text-muted-foreground text-sm">
-				Org-wide tracked time over the last {HEATMAP_DAYS} days.
-			</p>
-			{heatmap.isPending && <Skeleton className="h-24 w-full" />}
-			{heatmap.isError && (
-				<p className="text-destructive text-sm">{heatmap.error.message}</p>
-			)}
-			{heatmap.isSuccess && (
-				<OrgHeatmap data={heatmap.data} days={HEATMAP_DAYS} />
-			)}
-		</div>
+		<Card>
+			<CardHeader>
+				<CardTitle>Tracked time across the organization</CardTitle>
+				<CardDescription>
+					One square per day over the last {HEATMAP_DAYS} days, summed across
+					everyone.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				{heatmap.isPending && (
+					<Skeleton
+						role="status"
+						className="h-24 w-full"
+						aria-label="Loading activity"
+					/>
+				)}
+				{heatmap.isError && (
+					<p role="alert" className="text-destructive text-sm">
+						{heatmap.error.message}
+					</p>
+				)}
+				{heatmap.isSuccess && (
+					<OrgHeatmap data={heatmap.data} days={HEATMAP_DAYS} />
+				)}
+			</CardContent>
+		</Card>
 	);
 }
 
@@ -225,18 +290,18 @@ function OwnerTeamView({
 	refetchOrganization: () => void;
 }) {
 	return (
-		<>
+		<div className="grid gap-8">
 			<InviteMemberForm onInvited={refetchOrganization} />
 			<PendingInvitations
 				invitations={organization.invitations}
 				onCanceled={refetchOrganization}
 			/>
-			<h2 className="mb-2 font-medium text-base">Members</h2>
-			<div className="mb-8">
+			<section>
+				<h2 className="cn-font-heading mb-3 font-medium text-base">Members</h2>
 				<MembersTable />
-			</div>
+			</section>
 			<OrgHeatmapSection />
-		</>
+		</div>
 	);
 }
 
@@ -249,13 +314,18 @@ function MemberTeamView({
 }) {
 	const otherMembers = Math.max(memberCount - 1, 0);
 	return (
-		<Empty>
-			<EmptyTitle>You're part of {organizationName}</EmptyTitle>
-			<EmptyDescription>
-				{otherMembers === 0
-					? "You're the only member so far."
-					: `Along with ${otherMembers} other ${otherMembers === 1 ? "person" : "people"}.`}
-			</EmptyDescription>
+		<Empty className="ring-1 ring-border">
+			<EmptyHeader>
+				<EmptyMedia variant="icon">
+					<Users aria-hidden="true" />
+				</EmptyMedia>
+				<EmptyTitle>You're part of {organizationName}</EmptyTitle>
+				<EmptyDescription>
+					{otherMembers === 0
+						? "You're the only member so far. Your owner can invite more people."
+						: `Along with ${otherMembers} other ${otherMembers === 1 ? "person" : "people"}. Only the owner can see everyone's tracked time.`}
+				</EmptyDescription>
+			</EmptyHeader>
 		</Empty>
 	);
 }
@@ -275,8 +345,13 @@ export default function TeamPageClient() {
 
 	if (!mounted || sessionPending || organizationPending) {
 		return (
-			<div className="space-y-3">
-				<Skeleton className="h-10 w-full" />
+			<div
+				className="space-y-3"
+				role="status"
+				aria-busy="true"
+				aria-label="Loading your team"
+			>
+				<Skeleton className="h-28 w-full" />
 				<Skeleton className="h-32 w-full" />
 				<Skeleton className="h-24 w-full" />
 			</div>
@@ -285,12 +360,14 @@ export default function TeamPageClient() {
 
 	if (!session?.user || !activeOrganization) {
 		return (
-			<Empty>
-				<EmptyTitle>No organization found</EmptyTitle>
-				<EmptyDescription>
-					Something went wrong loading your organization. Try refreshing the
-					page.
-				</EmptyDescription>
+			<Empty className="ring-1 ring-border">
+				<EmptyHeader>
+					<EmptyTitle>No organization found</EmptyTitle>
+					<EmptyDescription>
+						Something went wrong loading your organization. Try refreshing the
+						page.
+					</EmptyDescription>
+				</EmptyHeader>
 			</Empty>
 		);
 	}

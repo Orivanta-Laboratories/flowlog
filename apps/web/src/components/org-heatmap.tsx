@@ -6,6 +6,7 @@ import { formatDurationLabel } from "@/helpers/format-time";
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const INTENSITY_BUCKET_COUNT = 5;
+const WEEKDAY_INITIALS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
 type HeatmapDay = {
 	date: Date;
@@ -46,10 +47,10 @@ function intensityBucket(trackedSeconds: number, maxSeconds: number): number {
 
 const INTENSITY_CLASSES = [
 	"bg-muted",
-	"bg-primary/20",
-	"bg-primary/40",
-	"bg-primary/60",
-	"bg-primary/85",
+	"bg-primary/25",
+	"bg-primary/45",
+	"bg-primary/70",
+	"bg-primary",
 ];
 
 export function OrgHeatmap({
@@ -75,6 +76,10 @@ export function OrgHeatmap({
 		(max, entry) => Math.max(max, entry.trackedSeconds),
 		0,
 	);
+	const totalSeconds = range.reduce(
+		(total, entry) => total + entry.trackedSeconds,
+		0,
+	);
 
 	const leadingBlanks = range[0] ? range[0].date.getUTCDay() : 0;
 	const cells: Array<HeatmapDay | null> = [
@@ -83,27 +88,62 @@ export function OrgHeatmap({
 	];
 
 	return (
-		<div
-			className="grid grid-flow-col grid-rows-7 gap-1"
-			role="img"
-			aria-label={`Org-wide tracked time over the last ${days} days`}
-		>
-			{cells.map((cell, index) =>
-				cell === null ? (
-					<div key={`blank-${index}`} className="size-3" />
-				) : (
+		<figure className="m-0">
+			<div className="overflow-x-auto">
+				<div className="flex w-fit gap-2">
 					<div
-						key={toIsoDateKey(cell.date)}
-						title={`${cell.date.toLocaleDateString()}: ${formatDurationLabel(cell.trackedSeconds)}`}
-						className={cn(
-							"size-3",
-							INTENSITY_CLASSES[
-								intensityBucket(cell.trackedSeconds, maxSeconds)
-							],
+						aria-hidden="true"
+						className="grid grid-rows-7 gap-1 pt-px text-[10px] text-muted-foreground leading-none"
+					>
+						{WEEKDAY_INITIALS.map((initial, index) => (
+							<span
+								key={`${initial}-${index}`}
+								className="flex size-3 items-center justify-center"
+							>
+								{index % 2 === 1 ? initial : ""}
+							</span>
+						))}
+					</div>
+					<div
+						className="grid grid-flow-col grid-rows-7 gap-1"
+						role="img"
+						aria-label={`Organization-wide tracked time over the last ${days} days, ${formatDurationLabel(totalSeconds)} in total`}
+					>
+						{cells.map((cell, index) =>
+							cell === null ? (
+								<div key={`blank-${index}`} className="size-3" />
+							) : (
+								<div
+									key={toIsoDateKey(cell.date)}
+									title={`${cell.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}: ${formatDurationLabel(cell.trackedSeconds)}`}
+									className={cn(
+										"size-3 rounded-sm",
+										INTENSITY_CLASSES[
+											intensityBucket(cell.trackedSeconds, maxSeconds)
+										],
+									)}
+								/>
+							),
 						)}
-					/>
-				),
-			)}
-		</div>
+					</div>
+				</div>
+			</div>
+			<figcaption className="mt-3 flex flex-wrap items-center gap-2 text-muted-foreground text-xs">
+				<span>
+					{formatDurationLabel(totalSeconds)} over {days} days
+				</span>
+				<span className="ml-auto flex items-center gap-1.5">
+					Less
+					{INTENSITY_CLASSES.map((intensity) => (
+						<span
+							key={intensity}
+							aria-hidden="true"
+							className={cn("size-3 rounded-sm", intensity)}
+						/>
+					))}
+					More
+				</span>
+			</figcaption>
+		</figure>
 	);
 }

@@ -16,7 +16,7 @@ export function draftFromSession(session: ActivitySessionRow): SessionDraft {
 	}
 	return {
 		finalLabel: session.suggestedLabel ?? "",
-		projectId: session.projectId,
+		projectId: session.projectId ?? session.suggestedProjectId,
 	};
 }
 

@@ -19,7 +19,7 @@ export function MarketingCta({ inverted = false }: { inverted?: boolean }) {
 	if (!mounted || isPending) {
 		return (
 			<div
-				className="h-11 w-44 animate-pulse rounded-full bg-muted"
+				className="h-10 w-48 animate-pulse rounded-full bg-muted"
 				aria-hidden="true"
 			/>
 		);
@@ -32,12 +32,12 @@ export function MarketingCta({ inverted = false }: { inverted?: boolean }) {
 				nativeButton={false}
 				size="lg"
 				className={cn(
-					"rounded-full",
+					"rounded-full px-3 py-2 text-base transition-all duration-700 ease-fluid",
 					inverted && "bg-background text-foreground hover:bg-background/90",
 				)}
 			>
-				Open dashboard
-				<ArrowRight data-icon="inline-end" />
+				Open your console
+				<ArrowRight data-icon="inline-end" aria-hidden="true" />
 			</Button>
 		);
 	}
@@ -49,12 +49,12 @@ export function MarketingCta({ inverted = false }: { inverted?: boolean }) {
 				nativeButton={false}
 				size="lg"
 				className={cn(
-					"rounded-full",
+					"rounded-full px-3 py-2 text-base transition-all duration-700 ease-fluid",
 					inverted && "bg-background text-foreground hover:bg-background/90",
 				)}
 			>
-				Get started
-				<ArrowRight data-icon="inline-end" />
+				Create your account
+				<ArrowRight data-icon="inline-end" aria-hidden="true" />
 			</Button>
 			<Button
 				render={<Link href="/login" />}
@@ -62,7 +62,7 @@ export function MarketingCta({ inverted = false }: { inverted?: boolean }) {
 				variant="outline"
 				size="lg"
 				className={cn(
-					"rounded-full",
+					"rounded-full px-3 py-2 text-base transition-all duration-700 ease-fluid",
 					inverted &&
 						"border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10",
 				)}

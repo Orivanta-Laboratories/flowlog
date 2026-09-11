@@ -10,3 +10,7 @@ export function dollarsInputToCents(value: string): number | null {
 	const parsed = Number.parseFloat(trimmed);
 	return Number.isFinite(parsed) ? Math.round(parsed * 100) : null;
 }
+
+export function centsToDollarsLabel(cents: number): string {
+	return `$${(cents / 100).toFixed(2)}`;
+}

@@ -27,3 +27,14 @@ export function useRevokeDevice() {
 		}),
 	);
 }
+
+export function useApproveDevicePairing() {
+	const queryClient = useQueryClient();
+	return useMutation(
+		orpc.device.pairing.approve.mutationOptions({
+			onSuccess: () => {
+				queryClient.invalidateQueries({ queryKey: orpc.device.list.key() });
+			},
+		}),
+	);
+}

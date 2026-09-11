@@ -1,167 +1,127 @@
 import { Badge } from "@flowlog/ui/components/badge";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardTitle,
-} from "@flowlog/ui/components/card";
 import { Separator } from "@flowlog/ui/components/separator";
 import {
-	CheckCircle2,
+	Eye,
+	EyeOff,
 	GitBranch,
 	Globe,
-	Lock,
-	Monitor,
+	Keyboard,
+	Laptop,
+	PauseCircle,
 	PenLine,
-	Sparkles,
-	Timer,
 } from "lucide-react";
-
+import type { Metadata } from "next";
+import { ExampleReview } from "@/components/marketing/example-review";
+import { FlowTimeline } from "@/components/marketing/flow-timeline";
+import { Reveal } from "@/components/marketing/reveal";
+import { TaglineReveal } from "@/components/marketing/tagline-reveal";
 import { MarketingCta } from "@/components/marketing-cta";
 
-const TRUST_POINTS = [
-	"Installs in about a minute",
-	"Stays on your device",
-	"No timers, ever",
-] as const;
+export const metadata: Metadata = {
+	title: "Flowlog — finish work, your timesheet is already started",
+	description:
+		"Flowlog turns the apps, windows, and git branches you already work in into a draft timesheet you read and correct, so you stop reconstructing your day from memory.",
+	alternates: { canonical: "/" },
+};
 
-const WEEKLY_BARS = [22, 30, 26, 40, 34, 12, 8] as const;
-
-const RECENT_ACTIVITY = [
+const AVAILABILITY = [
 	{
-		label: "Flowlog dashboard",
-		meta: "VS Code · main",
-		duration: "2h 15m",
-		status: "Confirmed",
-	},
-	{
-		label: "Client onboarding call",
-		meta: "Google Meet",
-		duration: "45m",
-		status: "Confirmed",
-	},
-	{
-		label: "Billing migration",
-		meta: "VS Code · billing fix",
-		duration: "1h 05m",
-		status: "Pending",
-	},
-] as const;
-
-const FEATURES = [
-	{
-		icon: Timer,
-		title: "No timer to remember",
-		description:
-			"There's no start or stop button. Flowlog builds your timesheet from the apps, windows, and repos you're already working in.",
-	},
-	{
-		icon: GitBranch,
-		title: "Understands git",
-		description:
-			"Branch switches and commits get matched to the time you spent, no matter which editor or terminal you use.",
-	},
-	{
-		icon: Sparkles,
-		title: "Confirm, don't compose",
-		description:
-			"Every block ships with a suggested label and a confidence score. Accept the obvious ones, edit the rest — you never type a timesheet from scratch.",
-	},
-	{
-		icon: Lock,
-		title: "Private by default",
-		description:
-			"Window titles never leave your device unless you turn on AI labeling yourself.",
-	},
-] as const;
-
-const SOURCES = [
-	{
-		icon: Monitor,
+		icon: Laptop,
 		title: "Desktop agent",
-		description:
-			"Tracks the active app, window title, and idle time in the background. Linux today, with more platforms on the way.",
-		status: "Runs as a background service",
+		body: "Runs as a background service and reads the focused window. Linux only today, through GNOME or X11.",
 	},
 	{
 		icon: Globe,
 		title: "Browser extension",
-		description:
-			"Adds the domain and tab title to your timesheet, with per site exclusions you control.",
-		status: "Works in Chrome, Edge, and Brave",
+		body: "Adds the site and tab title from any Chromium browser: Chrome, Edge, or Brave.",
 	},
 	{
 		icon: GitBranch,
 		title: "Git activity",
-		description:
-			"Branch switches and commit subjects are matched to the time you spent, in any editor.",
-		status: "Works with any git client",
+		body: "Branch switches and commit subjects get matched to the time around them, in whatever editor you use.",
 	},
 	{
 		icon: PenLine,
-		title: "Manual entries",
-		description:
-			"Add or correct a block by hand for time that happens away from a keyboard.",
-		status: "Always available as a fallback",
+		title: "Your own entries",
+		body: "Add or correct a block by hand for the work that happens away from a keyboard.",
 	},
 ] as const;
 
-const STEPS = [
+const BENEFITS = [
 	{
-		number: "1",
-		title: "Install the agent",
-		description:
-			"One binary for desktop, one extension for the browser. Sign in once and tracking starts right away — no timer to remember.",
+		title: "Read a draft instead of writing one",
+		body: "Your evening job shrinks to reading a list and fixing the parts that are wrong.",
 	},
 	{
-		number: "2",
-		title: "Let it run in the background",
-		description:
-			"Flowlog watches the app, window, and git branch you're already in. There's nothing to start, stop, or forget about during the day.",
+		title: "The same work gets the same label",
+		body: "A rule on a branch or a repository labels that work identically every time, without asking anything.",
 	},
 	{
-		number: "3",
-		title: "Confirm your day",
-		description:
-			"At the end of the day, review a suggested timesheet with labels and confidence scores already filled in. Accept what's right, edit the rest.",
+		title: "Billable time keeps its evidence",
+		body: "Every block still shows the app, repository, and branch it came from, so an invoice line can be explained.",
 	},
+	{
+		title: "Nothing counts until you say so",
+		body: "A suggestion is a suggestion. Confirmation is a separate, explicit action you take.",
+	},
+] as const;
+
+const COLLECTED = [
+	"The name of the focused app and its window title",
+	"The site domain and tab title from your browser",
+	"Whether you've gone idle",
+	"Your git repository, branch, and commit subjects",
+	"How long each of those lasted",
+] as const;
+
+const NOT_COLLECTED = [
+	"Keystrokes",
+	"Screenshots or screen recording",
+	"File contents",
+	"Anything matching your exclusion lists",
+	"Anything at all while tracking is paused",
 ] as const;
 
 const FAQS = [
 	{
-		question: "Which platforms does the desktop agent support?",
+		question: "Which platforms does the desktop agent run on?",
 		answer:
-			"The desktop agent runs on Linux today, using GNOME or X11 to detect the focused window. Support for other platforms is on the roadmap.",
+			"Linux only, right now. It detects the focused window through GNOME or X11. macOS and Windows aren't supported yet, and we'd rather say so than imply otherwise.",
 	},
 	{
 		question: "Which browsers does the extension work with?",
 		answer:
-			"Any Chromium based browser: Chrome, Edge, and Brave. It adds the site domain and tab title to your timesheet.",
+			"Any Chromium based browser, so Chrome, Edge, and Brave. It contributes the site domain and tab title alongside whatever the desktop agent sees.",
 	},
 	{
-		question: "What data does Flowlog actually collect?",
+		question: "Does my activity go to an AI model?",
 		answer:
-			"App name, window title, site domain, idle state, and git branch or commit subject. No keystrokes, no screenshots, and no file contents are ever recorded.",
+			"Only if you switch it on. Rules and your own past labels are matched locally and cover most repeat work. When nothing matches, Flowlog can ask Google Gemini for a suggested description, and it asks you to opt in first. Decline and tracking, rules, and manual review all keep working exactly as before.",
 	},
 	{
-		question: "Can I exclude certain apps or sites?",
+		question: "Does a tracked block prove the task is finished?",
 		answer:
-			"Yes. Exclusion lists for app names, window title patterns, and domains are applied before anything is queued, so excluded activity never touches disk or the network.",
+			"No, and Flowlog never claims it does. A block records where your attention was and for how long. Whether that amounted to finished work is a judgement only you can make, which is why confirming is a separate step.",
 	},
 	{
-		question: "Do I need to keep a tab or window open?",
+		question: "Can I keep some apps and sites out of it entirely?",
 		answer:
-			"No. The desktop agent runs as a background service and the extension runs in a browser service worker, so tracking keeps going without anything pinned open.",
+			"Yes. You can exclude app names, window title patterns, and domains. Those filters run before anything is queued, so excluded activity never touches disk or the network, and the server filters uploads as a second pass.",
 	},
 	{
 		question: "What if I forget to pause it?",
 		answer:
-			"Pause tracking any time from the browser toolbar popup or the desktop tray icon. Paused time is never queued or sent, so there's nothing to clean up after.",
+			"Set your working hours once and collection stops outside them. You can also pause on demand from the tray icon or the extension popup. Paused time is never queued, so there's nothing to clean up afterwards.",
 	},
 	{
 		question: "What happens if my connection drops?",
 		answer:
-			"Events queue to disk until they're delivered successfully, so a flaky connection doesn't cost you a block of your day.",
+			"Events queue on disk until they're delivered, so a flaky network costs you nothing.",
+	},
+	{
+		question: "Who can see my tracked time?",
+		answer:
+			"You, and the owner of your organization. Members see only their own time. That split is enforced on the server, not by hiding links in the interface.",
 	},
 ] as const;
 
@@ -169,218 +129,240 @@ export default function Home() {
 	return (
 		<>
 			<section className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:pt-24">
-				<div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
+				<div className="grid items-center gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
 					<div>
-						<Badge variant="secondary" className="mb-5 rounded-full">
-							Built for people who forget to start timers
+						<Badge
+							variant="outline"
+							className="mb-6 rounded-full bg-card px-3 py-1"
+						>
+							Zero input time tracking
 						</Badge>
-						<h1 className="mb-5 max-w-2xl text-balance font-semibold text-5xl tracking-tight sm:text-6xl">
-							The timesheet that fills itself in
+						<h1 className="mb-6 max-w-[680px] text-balance">
+							<span className="cn-font-heading block bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text font-semibold text-4xl text-transparent sm:text-5xl lg:text-6xl">
+								Finish work. <br className="hidden sm:inline" />
+								Your timesheet is <br className="hidden sm:inline" />
+								already started.
+							</span>
 						</h1>
-						<p className="mb-8 max-w-lg text-pretty text-lg text-muted-foreground">
-							Flowlog watches the app, window, and git branch you're already in,
-							turns it into a suggested timesheet at the end of the day, and
-							asks &ldquo;is this right?&rdquo; instead of &ldquo;what did you
-							do?&rdquo;
+						<p className="mb-8 max-w-[680px] text-pretty text-lg text-muted-foreground">
+							Flowlog watches the apps, windows, and git branches you're already
+							in, then hands you a draft of your day to read and correct. You
+							confirm it. You don't rebuild it from memory at 6pm.
 						</p>
-						<div className="mb-7 flex flex-wrap items-center gap-3">
+						<div className="mb-8 flex flex-wrap items-center gap-3">
 							<MarketingCta />
 						</div>
-						<ul className="flex flex-wrap gap-x-6 gap-y-2 text-muted-foreground text-sm">
-							{TRUST_POINTS.map((point) => (
-								<li key={point} className="flex items-center gap-1.5">
-									<CheckCircle2
-										className="size-4 text-primary"
-										aria-hidden="true"
-									/>
-									{point}
-								</li>
-							))}
-						</ul>
+						<p className="text-muted-foreground text-sm">
+							Desktop agent on Linux today. Browser extension for Chrome, Edge,
+							and Brave. Cloud AI is optional and off until you accept it.
+						</p>
 					</div>
 
-					<Card className="rounded-2xl text-sm shadow-sm">
-						<CardContent className="pt-5">
-							<p className="mb-1 text-muted-foreground text-sm">
-								Tracked this week
-							</p>
-							<div className="mb-5 flex items-baseline gap-2">
-								<span className="font-semibold text-3xl tracking-tight">
-									32h 40m
-								</span>
-								<span className="text-primary text-sm">+14% vs last week</span>
-							</div>
-							<div
-								className="mb-5 flex h-16 items-end gap-1.5"
-								role="img"
-								aria-label="Hours tracked per day this week"
-							>
-								{WEEKLY_BARS.map((height, index) => (
-									<div
-										key={index}
-										className="flex-1 rounded-t-md bg-primary/20 data-[current=true]:bg-primary"
-										data-current={index === WEEKLY_BARS.length - 2}
-										style={{ height: `${height * 2}px` }}
-									/>
-								))}
-							</div>
-							<Separator className="mb-4" />
-							<p className="mb-3 text-muted-foreground text-sm">
-								Recent activity
-							</p>
-							<ul className="space-y-3">
-								{RECENT_ACTIVITY.map((entry) => (
-									<li
-										key={entry.label}
-										className="flex items-center justify-between gap-3"
-									>
-										<div className="min-w-0">
-											<p className="truncate font-medium">{entry.label}</p>
-											<p className="truncate text-muted-foreground text-xs">
-												{entry.meta}
-											</p>
-										</div>
-										<div className="flex shrink-0 items-center gap-2">
-											<span className="text-xs">{entry.duration}</span>
-											<Badge
-												variant={
-													entry.status === "Confirmed" ? "default" : "secondary"
-												}
-												className="rounded-full"
-											>
-												{entry.status}
-											</Badge>
-										</div>
-									</li>
-								))}
-							</ul>
-						</CardContent>
-					</Card>
+					<Reveal delayMs={100}>
+						<ExampleReview />
+					</Reveal>
 				</div>
 			</section>
 
-			<section className="border-border border-t bg-muted/30 py-20">
-				<p className="mx-auto max-w-2xl text-balance px-4 text-center font-semibold text-3xl tracking-tight sm:text-4xl">
-					Time tracking should describe your day.
-					<br />
-					Not interrupt it.
-				</p>
+			<section className="border-t bg-muted/30 py-24">
+				<div className="mx-auto max-w-6xl px-4 text-center">
+					<TaglineReveal />
+				</div>
 			</section>
 
-			<section
-				id="product"
-				className="mx-auto max-w-6xl scroll-mt-16 px-4 py-20"
-			>
-				<p className="mb-1 font-medium text-primary text-sm">Product</p>
-				<h2 className="mb-3 max-w-2xl text-balance font-semibold text-3xl tracking-tight sm:text-4xl">
-					Every source you actually work in
-				</h2>
-				<p className="mb-10 max-w-xl text-muted-foreground">
-					Four inputs, one timesheet — nothing you do during the day falls
-					through a gap.
-				</p>
-				<div className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-					{SOURCES.map(({ icon: Icon, title, description, status }) => (
-						<Card key={title} className="rounded-2xl">
-							<CardContent className="pt-5">
-								<div className="mb-4 flex size-10 items-center justify-center rounded-xl bg-primary/10">
-									<Icon className="size-5 text-primary" aria-hidden="true" />
-								</div>
-								<CardTitle className="mb-1.5 text-base">{title}</CardTitle>
-								<CardDescription className="mb-4 text-sm">
-									{description}
-								</CardDescription>
-								<Separator className="mb-3" />
-								<p className="text-muted-foreground text-xs">{status}</p>
-							</CardContent>
-						</Card>
-					))}
-				</div>
-
-				<div className="grid gap-4 sm:grid-cols-2">
-					{FEATURES.map(({ icon: Icon, title, description }) => (
-						<Card key={title} className="rounded-2xl">
-							<CardContent className="flex gap-4 pt-5">
-								<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-									<Icon className="size-5 text-primary" aria-hidden="true" />
-								</div>
-								<div>
-									<CardTitle className="mb-1 text-base">{title}</CardTitle>
-									<CardDescription className="text-sm">
-										{description}
-									</CardDescription>
-								</div>
-							</CardContent>
-						</Card>
-					))}
+			<section className="mx-auto max-w-6xl px-4 py-24">
+				<div className="grid gap-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
+					<div>
+						<p className="mb-2 font-medium text-primary text-sm">The problem</p>
+						<h2 className="cn-font-heading mb-6 max-w-[680px] text-balance font-semibold text-3xl sm:text-4xl">
+							Reconstructing a workday is guesswork dressed up as admin
+						</h2>
+						<p className="mb-4 text-pretty text-muted-foreground">
+							By the evening the morning is gone. You remember the long meeting
+							and the thing that broke, and you round everything else to the
+							nearest half hour. Timers would fix it if anyone remembered to
+							start them, which is the whole problem with timers.
+						</p>
+						<p className="text-pretty text-muted-foreground">
+							Flowlog takes the opposite approach. It records what you had open
+							while you had it open, then asks you a question you can actually
+							answer: is this right?
+						</p>
+					</div>
+					<Reveal className="grid gap-6 sm:grid-cols-2" delayMs={80}>
+						{BENEFITS.map((benefit) => (
+							<div key={benefit.title}>
+								<h3 className="cn-font-heading mb-2 font-medium text-base">
+									{benefit.title}
+								</h3>
+								<p className="text-pretty text-muted-foreground text-sm">
+									{benefit.body}
+								</p>
+							</div>
+						))}
+					</Reveal>
 				</div>
 			</section>
 
 			<section
 				id="how-it-works"
-				className="scroll-mt-16 border-border border-t bg-muted/30 py-20 text-center"
+				className="scroll-mt-16 border-t bg-muted/30 py-24"
 			>
 				<div className="mx-auto max-w-6xl px-4">
-					<p className="mb-2 font-medium text-primary text-sm">
-						Getting started
-					</p>
-					<h2 className="mb-3 text-balance font-semibold text-3xl tracking-tight sm:text-4xl">
-						Three steps, not three weeks
+					<p className="mb-2 font-medium text-primary text-sm">How it works</p>
+					<h2 className="cn-font-heading mb-12 max-w-[680px] text-balance font-semibold text-3xl sm:text-4xl">
+						Work, review, confirm
 					</h2>
-					<p className="mx-auto mb-14 max-w-md text-muted-foreground">
-						No spreadsheets to maintain and nothing to remember to start.
+					<Reveal>
+						<FlowTimeline />
+					</Reveal>
+				</div>
+			</section>
+
+			<section
+				id="what-it-sees"
+				className="mx-auto max-w-6xl scroll-mt-16 px-4 py-24"
+			>
+				<p className="mb-2 font-medium text-primary text-sm">What it sees</p>
+				<h2 className="cn-font-heading mb-4 max-w-[680px] text-balance font-semibold text-3xl sm:text-4xl">
+					The honest version of what gets collected
+				</h2>
+				<p className="mb-12 max-w-[680px] text-pretty text-muted-foreground">
+					Window titles are the most personal thing this product touches, so
+					here's the full list rather than a reassuring adjective.
+				</p>
+
+				<div className="mb-16 grid gap-6 md:grid-cols-2">
+					<Reveal className="rounded-2xl bg-card p-6 ring-1 ring-border">
+						<div className="mb-4 flex items-center gap-3">
+							<Eye className="size-4 text-primary" aria-hidden="true" />
+							<h3 className="cn-font-heading font-medium text-base">
+								Collected
+							</h3>
+						</div>
+						<ul className="grid gap-3">
+							{COLLECTED.map((item) => (
+								<li key={item} className="flex gap-3 text-sm">
+									<span
+										aria-hidden="true"
+										className="mt-2 size-1 shrink-0 rounded-full bg-primary"
+									/>
+									<span className="text-pretty text-muted-foreground">
+										{item}
+									</span>
+								</li>
+							))}
+						</ul>
+					</Reveal>
+
+					<Reveal
+						delayMs={80}
+						className="rounded-2xl bg-card p-6 ring-1 ring-border"
+					>
+						<div className="mb-4 flex items-center gap-3">
+							<EyeOff
+								className="size-4 text-muted-foreground"
+								aria-hidden="true"
+							/>
+							<h3 className="cn-font-heading font-medium text-base">
+								Never collected
+							</h3>
+						</div>
+						<ul className="grid gap-3">
+							{NOT_COLLECTED.map((item) => (
+								<li key={item} className="flex gap-3 text-sm">
+									<span
+										aria-hidden="true"
+										className="mt-2 size-1 shrink-0 rounded-full bg-border"
+									/>
+									<span className="text-pretty text-muted-foreground">
+										{item}
+									</span>
+								</li>
+							))}
+						</ul>
+					</Reveal>
+				</div>
+
+				<h3 className="cn-font-heading mb-8 font-semibold text-2xl">
+					Where the time comes from
+				</h3>
+				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+					{AVAILABILITY.map((source, index) => (
+						<Reveal
+							key={source.title}
+							delayMs={index * 60}
+							className="rounded-2xl bg-card p-6 ring-1 ring-border"
+						>
+							<source.icon
+								className="mb-4 size-5 text-primary"
+								aria-hidden="true"
+							/>
+							<h4 className="cn-font-heading mb-2 font-medium text-base">
+								{source.title}
+							</h4>
+							<p className="text-pretty text-muted-foreground text-sm">
+								{source.body}
+							</p>
+						</Reveal>
+					))}
+				</div>
+
+				<div className="mt-16 flex flex-wrap items-center gap-4 rounded-2xl bg-accent px-6 py-6 text-accent-foreground">
+					<PauseCircle className="size-5 shrink-0" aria-hidden="true" />
+					<p className="min-w-0 flex-1 text-pretty text-sm">
+						You can pause collection from the tray icon or the extension popup,
+						switch cloud AI off in Settings, and revoke any device in one click.
+						Paused time is never queued, so stopping is a real stop.
 					</p>
-					<div className="grid gap-10 text-left sm:grid-cols-3">
-						{STEPS.map((step) => (
-							<div key={step.number}>
-								<span className="mb-4 inline-flex size-8 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
-									{step.number}
-								</span>
-								<h3 className="mb-2 font-medium text-lg">{step.title}</h3>
-								<p className="text-muted-foreground text-sm">
-									{step.description}
+				</div>
+			</section>
+
+			<section id="faq" className="border-t bg-muted/30 py-24">
+				<div className="mx-auto max-w-3xl scroll-mt-16 px-4">
+					<p className="mb-2 font-medium text-primary text-sm">FAQ</p>
+					<h2 className="cn-font-heading mb-12 text-balance font-semibold text-3xl sm:text-4xl">
+						The questions that decide it
+					</h2>
+					<div className="divide-y rounded-2xl bg-card ring-1 ring-border">
+						{FAQS.map((faq) => (
+							<details key={faq.question} className="group px-6 py-4">
+								<summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-md font-medium text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+									{faq.question}
+									<span
+										aria-hidden="true"
+										className="shrink-0 text-muted-foreground transition-transform duration-700 ease-fluid group-open:rotate-45"
+									>
+										+
+									</span>
+								</summary>
+								<p className="mt-3 text-pretty text-muted-foreground text-sm">
+									{faq.answer}
 								</p>
-							</div>
+							</details>
 						))}
 					</div>
 				</div>
 			</section>
 
-			<section id="faq" className="mx-auto max-w-3xl scroll-mt-16 px-4 py-20">
-				<p className="mb-2 text-center font-medium text-primary text-sm">FAQ</p>
-				<h2 className="mb-10 text-balance text-center font-semibold text-3xl tracking-tight sm:text-4xl">
-					Questions people actually ask
-				</h2>
-				<div className="divide-y divide-border rounded-2xl border border-border">
-					{FAQS.map((faq) => (
-						<details key={faq.question} className="group p-5 open:pb-5">
-							<summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
-								{faq.question}
-								<span
-									aria-hidden="true"
-									className="shrink-0 text-muted-foreground transition-transform group-open:rotate-45"
-								>
-									+
-								</span>
-							</summary>
-							<p className="mt-3 text-muted-foreground text-sm">{faq.answer}</p>
-						</details>
-					))}
-				</div>
-			</section>
-
-			<section className="mx-auto max-w-6xl px-4 pb-24">
-				<div className="rounded-3xl bg-primary px-6 py-16 text-center sm:px-12">
-					<h2 className="mb-3 text-balance font-semibold text-3xl text-primary-foreground tracking-tight sm:text-4xl">
-						Stop guessing where your day went
+			<section className="mx-auto max-w-6xl px-4 py-24">
+				<div className="rounded-2xl bg-primary px-6 py-16 text-center sm:px-12">
+					<h2 className="cn-font-heading mx-auto mb-4 max-w-[680px] text-balance font-semibold text-3xl text-primary-foreground sm:text-4xl">
+						Stop spending your evening remembering your morning
 					</h2>
-					<p className="mx-auto mb-8 max-w-md text-primary-foreground/80">
-						Install the agent, wire up the browser extension, and your first
-						suggested timesheet is waiting for you by tonight.
+					<p className="mx-auto mb-8 max-w-[680px] text-pretty text-primary-foreground/80">
+						Create an account, connect a device, and the first draft of your day
+						is waiting for you tonight. Keep cloud AI switched off if you'd
+						rather, rules and history still do the work.
 					</p>
 					<div className="flex flex-wrap items-center justify-center gap-3">
 						<MarketingCta inverted />
 					</div>
+					<Separator className="mx-auto my-8 max-w-xs bg-primary-foreground/20" />
+					<p className="flex flex-wrap items-center justify-center gap-2 text-primary-foreground/70 text-sm">
+						<Keyboard className="size-4" aria-hidden="true" />
+						Nothing to start. Nothing to stop. Nothing confirmed without you.
+					</p>
 				</div>
 			</section>
 		</>

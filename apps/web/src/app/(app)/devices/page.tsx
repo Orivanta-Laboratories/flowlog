@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { PageHeader } from "@/components/console/page-header";
 import { authClient } from "@/lib/auth-client";
 
 import DevicesPageClient from "./devices-page-client";
+
+export const metadata: Metadata = {
+	title: "Devices",
+};
 
 export default async function DevicesPage() {
 	const session = await authClient.getSession({
@@ -15,12 +21,11 @@ export default async function DevicesPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-2xl px-4 py-8">
-			<h1 className="mb-1 font-semibold text-xl">Devices</h1>
-			<p className="mb-6 text-muted-foreground text-sm">
-				Pair the desktop agent or browser extension so it can send activity to
-				your timesheet.
-			</p>
+		<div className="mx-auto max-w-3xl px-4 py-8">
+			<PageHeader
+				title="Devices"
+				description="Each connected device sends activity to your timesheet. Revoke one and it stops immediately."
+			/>
 			<DevicesPageClient />
 		</div>
 	);

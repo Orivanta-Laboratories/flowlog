@@ -16,11 +16,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
 	title: {
-		default: "Flowlog — the timesheet that fills itself in",
+		default: "Flowlog — finish work, your timesheet is already started",
 		template: "%s · Flowlog",
 	},
 	description:
-		"Flowlog turns the apps, windows, and git branches you already work in into a suggested timesheet, so you confirm your day instead of reconstructing it from memory.",
+		"Flowlog turns the apps, windows, and git branches you already work in into a draft timesheet you read and correct, so you stop reconstructing your day from memory.",
 	keywords: [
 		"automatic time tracking",
 		"timesheet software",
@@ -32,15 +32,15 @@ export const metadata: Metadata = {
 	openGraph: {
 		type: "website",
 		siteName: "Flowlog",
-		title: "Flowlog — the timesheet that fills itself in",
+		title: "Flowlog — finish work, your timesheet is already started",
 		description:
-			"Flowlog turns the apps, windows, and git branches you already work in into a suggested timesheet, so you confirm your day instead of reconstructing it from memory.",
+			"Flowlog turns the apps, windows, and git branches you already work in into a draft timesheet you read and correct, so you stop reconstructing your day from memory.",
 	},
 	twitter: {
 		card: "summary",
-		title: "Flowlog — the timesheet that fills itself in",
+		title: "Flowlog — finish work, your timesheet is already started",
 		description:
-			"Flowlog turns the apps, windows, and git branches you already work in into a suggested timesheet.",
+			"Flowlog turns the apps, windows, and git branches you already work in into a draft timesheet you read and correct.",
 	},
 };
 

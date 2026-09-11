@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { PageHeader } from "@/components/console/page-header";
 import { authClient } from "@/lib/auth-client";
 
 import ProjectsPageClient from "./projects-page-client";
+
+export const metadata: Metadata = {
+	title: "Projects & rules",
+};
 
 export default async function ProjectsPage() {
 	const session = await authClient.getSession({
@@ -15,12 +21,11 @@ export default async function ProjectsPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-3xl px-4 py-8">
-			<h1 className="mb-1 font-semibold text-xl">Projects & rules</h1>
-			<p className="mb-6 text-muted-foreground text-sm">
-				Projects group your time for billing. Rules auto-label sessions before
-				AI is ever involved.
-			</p>
+		<div className="mx-auto max-w-4xl px-4 py-8">
+			<PageHeader
+				title="Projects & rules"
+				description="Projects group your time for billing. Rules label it for you, before AI is ever involved."
+			/>
 			<ProjectsPageClient />
 		</div>
 	);
