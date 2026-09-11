@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
 	boolean,
 	index,
+	jsonb,
 	pgEnum,
 	pgTable,
 	text,
@@ -30,6 +31,14 @@ export const user = pgTable("user", {
 	emailVerified: boolean("email_verified").default(false).notNull(),
 	image: text("image"),
 	locale: localeEnum("locale").default(LOCALE.EN).notNull(),
+	aiConsentAt: timestamp("ai_consent_at", { withTimezone: true }),
+	workSchedule: jsonb("work_schedule").$type<{
+		enabled: boolean;
+		timezone: string;
+		days: number[];
+		startMinute: number;
+		endMinute: number;
+	}>(),
 	aiLabelingEnabled: boolean("ai_labeling_enabled").default(false).notNull(),
 	excludedAppNames: text("excluded_app_names").array().default([]).notNull(),
 	excludedTitlePatterns: text("excluded_title_patterns")

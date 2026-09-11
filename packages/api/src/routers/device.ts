@@ -4,7 +4,15 @@ import {
 	listDevicesByUser,
 	revokeDeviceForUser,
 } from "@flowlog/db/queries/device";
-import { DeviceNotFoundError, issueDeviceToken } from "@flowlog/utils";
+import {
+	approvePairingRequest,
+	findPendingPairingRequest,
+} from "@flowlog/db/queries/device-pairing";
+import {
+	DeviceNotFoundError,
+	issueDeviceToken,
+	PairingRequestNotFoundError,
+} from "@flowlog/utils";
 import { z } from "zod";
 
 import { protectedProcedure } from "../index";
@@ -13,6 +21,11 @@ import { throwAsOrpcError } from "../to-orpc-error";
 const createDeviceSchema = z.object({
 	name: z.string().trim().min(1).max(80),
 	platform: z.enum(DEVICE_PLATFORM_VALUES),
+});
+
+const approvePairingSchema = z.object({
+	pairingId: z.uuid(),
+	name: z.string().trim().min(1).max(80).optional(),
 });
 
 export const listDevices = protectedProcedure.handler(async ({ context }) => {
@@ -47,8 +60,34 @@ export const revokeDevice = protectedProcedure
 		return row;
 	});
 
+export const approveDevicePairing = protectedProcedure
+	.input(approvePairingSchema)
+	.handler(async ({ input, context }) => {
+		const approved = await approvePairingRequest(
+			input.pairingId,
+			context.session.user.id,
+			input.name?.trim() || "My computer",
+		);
+		if (approved === null)
+			throwAsOrpcError(new PairingRequestNotFoundError(input.pairingId));
+		return approved;
+	});
+
+export const getDevicePairing = protectedProcedure
+	.input(z.object({ pairingId: z.uuid() }))
+	.handler(async ({ input }) => {
+		const request = await findPendingPairingRequest(input.pairingId);
+		if (request === null)
+			throwAsOrpcError(new PairingRequestNotFoundError(input.pairingId));
+		return request;
+	});
+
 export const deviceRouter = {
 	list: listDevices,
 	create: createDevice,
 	revoke: revokeDevice,
+	pairing: {
+		get: getDevicePairing,
+		approve: approveDevicePairing,
+	},
 };

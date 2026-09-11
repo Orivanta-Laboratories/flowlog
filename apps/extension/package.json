@@ -13,5 +13,8 @@
 		"@types/chrome": "^0.1.30",
 		"esbuild": "^0.27.0",
 		"typescript": "catalog:"
+	},
+	"dependencies": {
+		"@flowlog/utils": "workspace:*"
 	}
 }

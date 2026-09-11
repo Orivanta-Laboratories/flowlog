@@ -9,14 +9,13 @@ use crate::client::ServerClient;
 use crate::config::Config;
 use crate::events::RawEventPayload;
 use crate::git::GitWatcher;
-use crate::privacy::Exclusions;
 use crate::queue::EventQueue;
 use crate::window::WindowWatcher;
 
 const EVENT_SOURCE_OS: &str = "OS";
 const EVENT_SOURCE_GIT: &str = "GIT";
 const MAX_EVENTS_PER_FLUSH: usize = 500;
-const EXCLUSIONS_REFRESH_TICKS: u64 = 40;
+const EXCLUSIONS_REFRESH_TICKS: u64 = 4;
 
 /// A point-in-time view of what the agent is doing, safe to hand to a GUI.
 #[derive(Debug, Clone, Serialize, Default)]
@@ -24,6 +23,7 @@ pub struct AgentStatus {
     pub paired: bool,
     pub paused: bool,
     pub is_idle: bool,
+    pub outside_shift: bool,
     pub active_app: Option<String>,
     pub active_window_title: Option<String>,
     pub queued_events: usize,
@@ -73,10 +73,8 @@ pub async fn run_loop(config: Config, status: SharedStatus) -> Result<()> {
     let mut queue = EventQueue::load(queue_path).await?;
 
     let client = ServerClient::new(config.server_url.clone(), config.device_token.clone());
-    let mut exclusions = client.fetch_exclusions().await.unwrap_or_else(|error| {
-        warn!(%error, "could not fetch exclusions from server, starting with none");
-        Exclusions::default()
-    });
+    config.validate()?;
+    let (mut exclusions, mut schedule) = client.fetch_exclusions().await?;
 
     let watcher = WindowWatcher::connect().await;
     let mut git_watcher = GitWatcher::new(config.watched_repos.clone());
@@ -98,9 +96,28 @@ pub async fn run_loop(config: Config, status: SharedStatus) -> Result<()> {
             }
         }
 
-        ticks += 1;
+        ticks = ticks.wrapping_add(1);
+        if ticks.is_multiple_of(flush_every_ticks) {
+            flush(&client, &mut queue, &status).await;
+        }
+        if ticks.is_multiple_of(EXCLUSIONS_REFRESH_TICKS) {
+            match client.fetch_exclusions().await {
+                Ok((refreshed, next_schedule)) => {
+                    exclusions = refreshed;
+                    schedule = next_schedule;
+                }
+                Err(error) => {
+                    warn!(%error, "settings refresh failed; pausing collection until retry");
+                    continue;
+                }
+            }
+        }
+        let outside_shift = schedule
+            .as_ref()
+            .is_some_and(|value| !value.allows(chrono::Utc::now()));
+        status.update(|s| s.outside_shift = outside_shift);
 
-        if status.is_paused() {
+        if status.is_paused() || outside_shift {
             status.update(|s| {
                 s.active_app = None;
                 s.active_window_title = None;
@@ -115,7 +132,10 @@ pub async fn run_loop(config: Config, status: SharedStatus) -> Result<()> {
             .map(|seconds| seconds >= config.idle_threshold_seconds)
             .unwrap_or(false);
 
-        if exclusions.is_excluded(snapshot.app_name.as_deref(), snapshot.window_title.as_deref()) {
+        if exclusions.is_excluded(
+            snapshot.app_name.as_deref(),
+            snapshot.window_title.as_deref(),
+        ) {
             continue;
         }
 
@@ -161,22 +181,11 @@ pub async fn run_loop(config: Config, status: SharedStatus) -> Result<()> {
             error!(%error, "failed to persist event queue to disk");
         });
         status.update(|s| s.queued_events = queue.len());
-
-        if ticks % flush_every_ticks == 0 {
-            flush(&client, &mut queue, &status).await;
-        }
-
-        if ticks % EXCLUSIONS_REFRESH_TICKS == 0 {
-            match client.fetch_exclusions().await {
-                Ok(refreshed) => exclusions = refreshed,
-                Err(error) => warn!(%error, "could not refresh exclusions"),
-            }
-        }
     }
 }
 
 async fn flush(client: &ServerClient, queue: &mut EventQueue, status: &SharedStatus) {
-    if queue.len() == 0 {
+    if queue.is_empty() {
         return;
     }
     let batch = queue.peek_batch(MAX_EVENTS_PER_FLUSH);

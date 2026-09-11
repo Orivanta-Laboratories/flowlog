@@ -1,10 +1,13 @@
-import { fetchExcludedDomains } from "./lib/client";
+import { fetchExcludedDomains, pollPairing, startPairing } from "./lib/client";
+import { WEB_APP_URL } from "./lib/config";
 import {
 	getConfig,
 	getExclusions,
 	setConfig,
 	setExclusions,
 } from "./lib/storage";
+
+const POLL_INTERVAL_MS = 2000;
 
 function elementById<T extends HTMLElement>(id: string): T {
 	const element = document.getElementById(id);
@@ -26,38 +29,71 @@ async function renderExcludedDomains(): Promise<void> {
 	);
 }
 
-async function loadForm(): Promise<void> {
+async function renderConnectionState(): Promise<void> {
 	const config = await getConfig();
-	elementById<HTMLInputElement>("server-url").value = config.serverUrl;
-	elementById<HTMLInputElement>("device-token").value = config.deviceToken;
+	elementById<HTMLParagraphElement>("connection-state").textContent =
+		config.deviceToken === "" ? "Not connected." : "Connected.";
+}
+
+async function loadForm(): Promise<void> {
+	await renderConnectionState();
 	await renderExcludedDomains();
 }
 
-async function handleSave(): Promise<void> {
+async function pollUntilApproved(
+	pairingId: string,
+	expiresAt: string,
+	deviceCode: string,
+): Promise<void> {
 	const status = elementById<HTMLParagraphElement>("status");
-	const serverUrl = elementById<HTMLInputElement>("server-url").value.trim();
-	const deviceToken =
-		elementById<HTMLInputElement>("device-token").value.trim();
+	const deadline = new Date(expiresAt).getTime();
 
-	await setConfig({ serverUrl, deviceToken });
-	status.textContent = "Saved. Checking connection…";
+	while (Date.now() < deadline) {
+		await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+		const result = await pollPairing(pairingId, deviceCode);
+		if (result.status === "expired") break;
+		if (result.status === "approved") {
+			await setConfig({ deviceToken: deviceCode });
+			status.textContent = "Connected. Checking your settings…";
+			try {
+				const domains = await fetchExcludedDomains(await getConfig());
+				await setExclusions({
+					domains: domains.excludedDomains,
+					workSchedule: domains.workSchedule,
+				});
+			} catch {}
+			await renderConnectionState();
+			await renderExcludedDomains();
+			status.textContent = "Connected.";
+			return;
+		}
+	}
+	status.textContent = "That connection link expired. Try again.";
+}
+
+async function handleConnect(): Promise<void> {
+	const status = elementById<HTMLParagraphElement>("status");
+	const button = elementById<HTMLButtonElement>("connect");
+	button.disabled = true;
+	status.textContent = "Waiting for approval in the browser tab…";
 
 	try {
-		const domains = await fetchExcludedDomains({
-			serverUrl,
-			deviceToken,
-			paused: false,
-		});
-		await setExclusions({ domains });
-		await renderExcludedDomains();
-		status.textContent = "Connected.";
+		const { pairingId, expiresAt, deviceCode } = await startPairing();
+		window.open(
+			`${WEB_APP_URL}/devices/connect?pairingId=${pairingId}`,
+			"_blank",
+			"noopener,noreferrer",
+		);
+		await pollUntilApproved(pairingId, expiresAt, deviceCode);
 	} catch {
-		status.textContent = "Saved, but could not reach the server yet.";
+		status.textContent = "Could not reach the Flowlog server. Try again.";
+	} finally {
+		button.disabled = false;
 	}
 }
 
-elementById<HTMLButtonElement>("save").addEventListener(
+elementById<HTMLButtonElement>("connect").addEventListener(
 	"click",
-	() => void handleSave(),
+	() => void handleConnect(),
 );
 void loadForm();

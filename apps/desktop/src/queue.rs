@@ -45,6 +45,10 @@ impl EventQueue {
         self.pending.push_back(event);
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.pending.is_empty()
+    }
+
     pub fn len(&self) -> usize {
         self.pending.len()
     }

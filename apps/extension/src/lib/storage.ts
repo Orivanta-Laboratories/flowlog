@@ -6,7 +6,6 @@ const QUEUE_KEY = "flowlog_queue";
 const LAST_SNAPSHOT_KEY = "flowlog_last_snapshot";
 
 const DEFAULT_CONFIG: StoredConfig = {
-	serverUrl: "",
 	deviceToken: "",
 	paused: false,
 };

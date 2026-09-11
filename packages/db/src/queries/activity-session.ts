@@ -28,6 +28,7 @@ const sessionListColumns = {
 	signalFingerprint: activitySession.signalFingerprint,
 	status: activitySession.status,
 	suggestedLabel: activitySession.suggestedLabel,
+	suggestedProjectId: activitySession.suggestedProjectId,
 	suggestionSource: activitySession.suggestionSource,
 	suggestionRationale: activitySession.suggestionRationale,
 	confidencePercent: activitySession.confidencePercent,

@@ -14,7 +14,7 @@ async function render(): Promise<void> {
 	const text = elementById<HTMLSpanElement>("status-text");
 	const toggle = elementById<HTMLButtonElement>("toggle-pause");
 
-	if (config.deviceToken === "" || config.serverUrl === "") {
+	if (config.deviceToken === "") {
 		dot.className = "dot";
 		text.textContent = "Not connected";
 		toggle.style.display = "none";

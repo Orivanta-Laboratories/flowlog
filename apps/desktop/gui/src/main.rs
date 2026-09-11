@@ -25,27 +25,10 @@ fn toggle_pause(status: State<SharedStatus>) -> AgentStatus {
 }
 
 #[tauri::command]
-fn get_config() -> Option<Config> {
-    let path = Config::config_path().ok()?;
-    Config::load(&path).ok()
-}
-
-#[tauri::command]
-fn save_config(server_url: String, device_token: String) -> Result<(), String> {
-    let path = Config::config_path().map_err(|error| error.to_string())?;
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
-    }
-    let config = Config {
-        device_token,
-        server_url,
-        watched_repos: Vec::new(),
-        sample_interval_seconds: 15,
-        flush_interval_seconds: 60,
-        idle_threshold_seconds: 120,
-    };
-    let serialized = toml::to_string_pretty(&config).map_err(|error| error.to_string())?;
-    std::fs::write(&path, serialized).map_err(|error| error.to_string())
+async fn sign_in(server_url: String, web_url: String) -> Result<(), String> {
+    flowlog_agent::login::login(server_url, web_url)
+        .await
+        .map_err(|_| "Could not complete sign-in. Check the addresses and try again.".to_string())
 }
 
 fn spawn_agent_task(status: SharedStatus) {
@@ -88,19 +71,17 @@ fn spawn_status_broadcast(app: AppHandle, status: SharedStatus) {
 
 fn main() {
     tracing_subscriber::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env().add_directive("flowlog_agent=info".parse().unwrap()))
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive("flowlog_agent=info".parse().unwrap()),
+        )
         .init();
 
     let status = SharedStatus::new();
 
     tauri::Builder::default()
         .manage(status.clone())
-        .invoke_handler(tauri::generate_handler![
-            get_status,
-            toggle_pause,
-            get_config,
-            save_config
-        ])
+        .invoke_handler(tauri::generate_handler![get_status, toggle_pause, sign_in])
         .setup(move |app| {
             spawn_agent_task(status.clone());
             spawn_status_broadcast(app.handle().clone(), status.clone());

@@ -6,3 +6,7 @@ pub mod git;
 pub mod privacy;
 pub mod queue;
 pub mod window;
+
+pub mod login;
+
+pub mod schedule;

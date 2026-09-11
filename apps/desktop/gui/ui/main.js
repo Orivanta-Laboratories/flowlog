@@ -10,7 +10,7 @@ const lastSync = document.getElementById("last-sync");
 const togglePauseButton = document.getElementById("toggle-pause");
 const settingsCard = document.getElementById("settings-card");
 const serverUrlInput = document.getElementById("server-url");
-const deviceTokenInput = document.getElementById("device-token");
+const webUrlInput = document.getElementById("web-url");
 const saveConfigButton = document.getElementById("save-config");
 const settingsStatus = document.getElementById("settings-status");
 
@@ -25,6 +25,9 @@ function renderStatus(status) {
 	if (!status.paired) {
 		statusDot.dataset.state = "unpaired";
 		statusText.textContent = "Not connected";
+	} else if (status.outside_shift) {
+		statusDot.dataset.state = "paused";
+		statusText.textContent = "Outside working hours";
 	} else if (status.paused) {
 		statusDot.dataset.state = "paused";
 		statusText.textContent = "Paused";
@@ -63,32 +66,27 @@ async function refreshStatus() {
 	renderStatus(await invoke("get_status"));
 }
 
-async function loadConfig() {
-	const config = await invoke("get_config");
-	if (config) {
-		serverUrlInput.value = config.server_url;
-		deviceTokenInput.value = config.device_token;
-	}
-}
-
 togglePauseButton.addEventListener("click", async () => {
 	renderStatus(await invoke("toggle_pause"));
 });
 
 saveConfigButton.addEventListener("click", async () => {
-	settingsStatus.textContent = "Saving…";
+	settingsStatus.textContent = "Approve this device in your browser…";
+	saveConfigButton.disabled = true;
 	try {
-		await invoke("save_config", {
+		await invoke("sign_in", {
 			serverUrl: serverUrlInput.value.trim(),
-			deviceToken: deviceTokenInput.value.trim(),
+			webUrl: webUrlInput.value.trim(),
 		});
 		settingsStatus.textContent = "Saved. Tracking will connect shortly.";
-	} catch (error) {
-		settingsStatus.textContent = `Could not save: ${error}`;
+	} catch {
+		settingsStatus.textContent =
+			"Could not connect. Check the addresses and try again.";
+	} finally {
+		saveConfigButton.disabled = false;
 	}
 });
 
 listen("flowlog://status-updated", (event) => renderStatus(event.payload));
 
 refreshStatus();
-loadConfig();

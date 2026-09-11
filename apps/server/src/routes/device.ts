@@ -1,13 +1,33 @@
-import { EVENT_SOURCE_VALUES } from "@flowlog/db/constants";
+import {
+	DEVICE_PLATFORM_VALUES,
+	EVENT_SOURCE_VALUES,
+	PAIRING_REQUEST_STATUS,
+} from "@flowlog/db/constants";
 import {
 	findActiveDeviceByTokenHash,
 	touchDeviceLastSeen,
 } from "@flowlog/db/queries/device";
+import {
+	findPairingRequestStatus,
+	insertPairingRequest,
+} from "@flowlog/db/queries/device-pairing";
 import { insertRawEvents } from "@flowlog/db/queries/raw-event";
 import { findUserExclusions } from "@flowlog/db/queries/user";
-import { hashDeviceToken, isExcludedActivity } from "@flowlog/utils";
+import {
+	hashDeviceToken,
+	isExcludedActivity,
+	issueDeviceToken,
+	isWithinWorkSchedule,
+} from "@flowlog/utils";
 import { Hono } from "hono";
 import { z } from "zod";
+import { deviceLimits } from "./device-limits";
+
+const PAIRING_REQUEST_TTL_MS = 5 * 60 * 1000;
+
+const startPairingSchema = z.object({
+	platform: z.enum(DEVICE_PLATFORM_VALUES),
+});
 
 const rawEventSchema = z.object({
 	clientEventId: z.string().min(1).max(100),
@@ -26,6 +46,13 @@ const pushEventsSchema = z.object({
 });
 
 export const deviceRoutes = new Hono();
+deviceRoutes.route("/", deviceLimits());
+
+deviceRoutes.use("/v1/pairing*", async (c, next) => {
+	c.header("Cache-Control", "no-store");
+	c.header("Referrer-Policy", "no-referrer");
+	await next();
+});
 
 async function authenticateDevice(authorizationHeader: string | undefined) {
 	const token = authorizationHeader?.startsWith("Bearer ")
@@ -48,6 +75,7 @@ deviceRoutes.get("/v1/config", async (c) => {
 		excludedAppNames: exclusions?.excludedAppNames ?? [],
 		excludedTitlePatterns: exclusions?.excludedTitlePatterns ?? [],
 		excludedDomains: exclusions?.excludedDomains ?? [],
+		workSchedule: exclusions?.workSchedule ?? null,
 	});
 });
 
@@ -68,13 +96,14 @@ deviceRoutes.post("/v1/events", async (c) => {
 	const acceptable = parsed.data.events.filter(
 		(event) =>
 			exclusions === null ||
-			!isExcludedActivity(
-				{ appName: event.appName, windowTitle: event.windowTitle },
-				{
-					appNames: exclusions.excludedAppNames,
-					titlePatterns: exclusions.excludedTitlePatterns,
-				},
-			),
+			(isWithinWorkSchedule(event.occurredAt, exclusions.workSchedule) &&
+				!isExcludedActivity(
+					{ appName: event.appName, windowTitle: event.windowTitle },
+					{
+						appNames: exclusions.excludedAppNames,
+						titlePatterns: exclusions.excludedTitlePatterns,
+					},
+				)),
 	);
 
 	await Promise.all([
@@ -92,4 +121,52 @@ deviceRoutes.post("/v1/events", async (c) => {
 		accepted: acceptable.length,
 		rejected: parsed.data.events.length - acceptable.length,
 	});
+});
+
+deviceRoutes.post("/v1/pairing", async (c) => {
+	const parsed = startPairingSchema.safeParse(
+		await c.req.json().catch(() => null),
+	);
+	if (!parsed.success) {
+		return c.json({ error: "INVALID_PAYLOAD" }, 400);
+	}
+
+	const expiresAt = new Date(Date.now() + PAIRING_REQUEST_TTL_MS);
+	const issued = issueDeviceToken();
+	const row = await insertPairingRequest(
+		parsed.data.platform,
+		expiresAt,
+		issued.tokenHash,
+		issued.tokenPreview,
+	);
+	if (row === undefined) {
+		return c.json({ error: "PAIRING_REQUEST_FAILED" }, 500);
+	}
+	return c.json({
+		pairingId: row.id,
+		expiresAt: row.expiresAt,
+		deviceCode: issued.token,
+	});
+});
+
+deviceRoutes.get("/v1/pairing/:id", async (c) => {
+	const id = z.uuid().safeParse(c.req.param("id"));
+	if (!id.success) {
+		return c.json({ status: "expired" });
+	}
+
+	const authorization = c.req.header("authorization");
+	if (!authorization?.startsWith("Bearer "))
+		return c.json({ error: "UNAUTHORIZED" }, 401);
+	const current = await findPairingRequestStatus(
+		id.data,
+		hashDeviceToken(authorization.slice(7)),
+	);
+	if (current === null) return c.json({ status: "expired" });
+	if (current.status === PAIRING_REQUEST_STATUS.APPROVED) {
+		return current.deviceId === null
+			? c.json({ status: "expired" })
+			: c.json({ status: "approved", deviceId: current.deviceId });
+	}
+	return c.json({ status: "pending" });
 });

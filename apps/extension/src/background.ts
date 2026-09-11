@@ -1,3 +1,4 @@
+import { isWithinWorkSchedule } from "@flowlog/utils/time/shift";
 import { fetchExcludedDomains, pushEvents } from "./lib/client";
 import { extractDomain, isDomainExcluded } from "./lib/domain";
 import {
@@ -16,12 +17,13 @@ const MAX_QUEUE_LENGTH = 5000;
 const MAX_EVENTS_PER_FLUSH = 500;
 const IDLE_DETECTION_SECONDS = 120;
 
+void chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
 chrome.runtime.onInstalled.addListener(scheduleAlarms);
 chrome.runtime.onStartup.addListener(scheduleAlarms);
 
 function scheduleAlarms(): void {
 	chrome.alarms.create(HEARTBEAT_ALARM, { periodInMinutes: 1 });
-	chrome.alarms.create(REFRESH_EXCLUSIONS_ALARM, { periodInMinutes: 10 });
+	chrome.alarms.create(REFRESH_EXCLUSIONS_ALARM, { periodInMinutes: 1 });
 	chrome.idle.setDetectionInterval(IDLE_DETECTION_SECONDS);
 }
 
@@ -44,6 +46,7 @@ chrome.windows.onFocusChanged.addListener(() => void captureAndQueue());
 chrome.idle.onStateChanged.addListener(() => void captureAndQueue());
 
 async function handleHeartbeat(): Promise<void> {
+	await refreshExclusions();
 	await captureAndQueue();
 	await flush();
 }
@@ -58,21 +61,24 @@ async function currentActiveTab(): Promise<chrome.tabs.Tab | null> {
 
 async function captureAndQueue(): Promise<void> {
 	const config = await getConfig();
-	if (config.paused || config.deviceToken === "" || config.serverUrl === "") {
+	if (config.paused || config.deviceToken === "") {
 		return;
 	}
 
 	const idleState = await chrome.idle.queryState(IDLE_DETECTION_SECONDS);
-	const isIdle = idleState !== "active";
+	const focusedWindow = await chrome.windows.getLastFocused();
+	const isIdle = idleState !== "active" || !focusedWindow.focused;
 
 	const tab = await currentActiveTab();
 	const domain = tab?.url ? extractDomain(tab.url) : null;
-	if (domain === null) {
-		return;
-	}
-
 	const exclusions = await getExclusions();
-	if (isDomainExcluded(domain, exclusions.domains)) {
+	if (!isWithinWorkSchedule(new Date(), exclusions.workSchedule ?? null))
+		return;
+	const excluded =
+		domain === null ||
+		tab?.incognito === true ||
+		isDomainExcluded(domain, exclusions.domains);
+	if (excluded && !isIdle) {
 		return;
 	}
 
@@ -80,8 +86,9 @@ async function captureAndQueue(): Promise<void> {
 		clientEventId: crypto.randomUUID(),
 		occurredAt: new Date().toISOString(),
 		source: "BROWSER",
-		appName: domain,
-		windowTitle: tab?.title ?? null,
+		appName: isIdle || excluded ? null : domain,
+		windowTitle:
+			isIdle || excluded ? null : (tab?.title?.slice(0, 500) ?? null),
 		repoName: null,
 		branchName: null,
 		commitSubject: null,
@@ -93,7 +100,7 @@ async function captureAndQueue(): Promise<void> {
 
 async function flush(): Promise<void> {
 	const config = await getConfig();
-	if (config.deviceToken === "" || config.serverUrl === "") {
+	if (config.deviceToken === "") {
 		return;
 	}
 
@@ -113,12 +120,15 @@ async function flush(): Promise<void> {
 
 async function refreshExclusions(): Promise<void> {
 	const config = await getConfig();
-	if (config.deviceToken === "" || config.serverUrl === "") {
+	if (config.deviceToken === "") {
 		return;
 	}
 	try {
 		const domains = await fetchExcludedDomains(config);
-		await setExclusions({ domains });
+		await setExclusions({
+			domains: domains.excludedDomains,
+			workSchedule: domains.workSchedule,
+		});
 	} catch {
 		return;
 	}

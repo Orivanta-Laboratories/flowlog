@@ -1,10 +1,16 @@
 export type StoredConfig = {
-	serverUrl: string;
 	deviceToken: string;
 	paused: boolean;
 };
 
+export type PairingStatusResponse =
+	| { status: "pending" }
+	| { status: "approved"; deviceId: string }
+	| { status: "claimed" }
+	| { status: "expired" };
+
 export type StoredExclusions = {
+	workSchedule?: import("@flowlog/utils/time/shift").WorkSchedule | null;
 	domains: string[];
 };
 

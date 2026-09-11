@@ -6,6 +6,8 @@ import { user } from "../schema/auth";
 const preferenceColumns = {
 	locale: user.locale,
 	aiLabelingEnabled: user.aiLabelingEnabled,
+	aiConsentAt: user.aiConsentAt,
+	workSchedule: user.workSchedule,
 	excludedAppNames: user.excludedAppNames,
 	excludedTitlePatterns: user.excludedTitlePatterns,
 	excludedDomains: user.excludedDomains,
@@ -27,6 +29,8 @@ export async function updateUserPreferences(
 			typeof user.$inferInsert,
 			| "locale"
 			| "aiLabelingEnabled"
+			| "aiConsentAt"
+			| "workSchedule"
 			| "excludedAppNames"
 			| "excludedTitlePatterns"
 			| "excludedDomains"
@@ -48,6 +52,8 @@ export async function findUserExclusions(userId: string) {
 			excludedTitlePatterns: user.excludedTitlePatterns,
 			excludedDomains: user.excludedDomains,
 			aiLabelingEnabled: user.aiLabelingEnabled,
+			aiConsentAt: user.aiConsentAt,
+			workSchedule: user.workSchedule,
 		})
 		.from(user)
 		.where(eq(user.id, userId))

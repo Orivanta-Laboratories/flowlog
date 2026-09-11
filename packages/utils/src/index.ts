@@ -8,3 +8,4 @@ export * from "./labeling/suggest";
 export * from "./privacy/redaction";
 export * from "./segmentation/segment";
 export * from "./time";
+export * from "./time/shift";

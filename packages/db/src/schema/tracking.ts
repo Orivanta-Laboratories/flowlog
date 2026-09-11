@@ -14,6 +14,8 @@ import {
 import {
 	DEVICE_PLATFORM_VALUES,
 	EVENT_SOURCE_VALUES,
+	PAIRING_REQUEST_STATUS,
+	PAIRING_REQUEST_STATUS_VALUES,
 	PROJECT_COLOR,
 	PROJECT_COLOR_VALUES,
 	RULE_FIELD_VALUES,
@@ -42,6 +44,10 @@ export const devicePlatformEnum = pgEnum(
 	DEVICE_PLATFORM_VALUES,
 );
 export const projectColorEnum = pgEnum("project_color", PROJECT_COLOR_VALUES);
+export const pairingRequestStatusEnum = pgEnum(
+	"pairing_request_status",
+	PAIRING_REQUEST_STATUS_VALUES,
+);
 
 export const project = pgTable(
 	"project",
@@ -217,6 +223,32 @@ export const activitySession = pgTable(
 			table.userId,
 			table.startedAt,
 		),
+	],
+);
+
+export const devicePairingRequest = pgTable(
+	"device_pairing_request",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		platform: devicePlatformEnum("platform").notNull(),
+		status: pairingRequestStatusEnum("status")
+			.default(PAIRING_REQUEST_STATUS.PENDING)
+			.notNull(),
+		userId: text("user_id").references(() => user.id, {
+			onDelete: "cascade",
+		}),
+		deviceId: uuid("device_id").references(() => device.id, {
+			onDelete: "cascade",
+		}),
+		tokenHash: text("token_hash"),
+		tokenPreview: text("token_preview"),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+	},
+	(table) => [
+		index("device_pairing_request_expires_at_idx").on(table.expiresAt),
 	],
 );
 

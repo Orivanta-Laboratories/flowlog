@@ -36,10 +36,10 @@
 			<details class="card" id="settings-card">
 				<summary>Connection</summary>
 				<label for="server-url">Server URL</label>
-				<input id="server-url" type="text" placeholder="https://your-flowlog-server" />
-				<label for="device-token">Device token</label>
-				<input id="device-token" type="password" placeholder="Paste the token from Settings → Devices" />
-				<button class="button secondary" id="save-config">Save</button>
+				<input id="server-url" type="url" value="http://localhost:3000" />
+				<label for="web-url">Web app URL</label>
+				<input id="web-url" type="url" value="http://localhost:3001" />
+				<button class="button secondary" id="save-config">Sign in with your browser</button>
 				<p class="hint" id="settings-status"></p>
 			</details>
 		</main>

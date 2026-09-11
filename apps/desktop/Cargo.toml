@@ -31,6 +31,7 @@ directories = "5"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 zbus = { version = "4", default-features = false, features = ["tokio"] }
+chrono-tz = "0.10"
 
 [profile.release]
 opt-level = "z"

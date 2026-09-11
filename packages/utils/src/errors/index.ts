@@ -65,6 +65,15 @@ export class DeviceTokenInvalidError extends Error {
 	}
 }
 
+export class PairingRequestNotFoundError extends Error {
+	readonly code = "PAIRING_REQUEST_NOT_FOUND";
+	constructor(pairingId: string) {
+		super(
+			`Pairing request ${pairingId} has expired or was already used. Start a new connection from the device.`,
+		);
+	}
+}
+
 export class AiLabelingNotConsentedError extends Error {
 	readonly code = "AI_LABELING_NOT_CONSENTED";
 	constructor() {
@@ -110,6 +119,7 @@ export type FlowlogError =
 	| MatchingRuleNotFoundError
 	| DeviceNotFoundError
 	| DeviceTokenInvalidError
+	| PairingRequestNotFoundError
 	| AiLabelingNotConsentedError
 	| AiLabelingUnavailableError
 	| ExportRangeTooLargeError
