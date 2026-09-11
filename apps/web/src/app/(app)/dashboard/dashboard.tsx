@@ -114,6 +114,54 @@ function DaySummary({ rows }: { rows: ActivitySessionRow[] }) {
 	);
 }
 
+function DayTimeline({ rows }: { rows: ActivitySessionRow[] }) {
+	const total = rows.reduce((sum, row) => sum + row.durationSeconds, 0);
+	if (total === 0) return null;
+	return (
+		<section className="mb-8 rounded-xl bg-card p-5 shadow-sm ring-1 ring-foreground/10">
+			<div className="mb-4 flex items-center justify-between gap-3">
+				<div>
+					<h2 className="cn-font-heading font-semibold text-base">
+						Your workday at a glance
+					</h2>
+					<p className="text-muted-foreground text-sm">
+						Each segment is observed activity. Gaps stay empty.
+					</p>
+				</div>
+				<div className="flex items-center gap-3 text-muted-foreground text-xs">
+					<span className="flex items-center gap-1.5">
+						<span className="size-2 rounded-full bg-primary" />
+						Confirmed
+					</span>
+					<span className="flex items-center gap-1.5">
+						<span className="size-2 rounded-full bg-muted-foreground/40" />
+						To review
+					</span>
+				</div>
+			</div>
+			<div
+				className="flex h-12 gap-1 overflow-hidden rounded-lg bg-muted/50 p-1"
+				role="img"
+				aria-label="Timeline of tracked blocks"
+			>
+				{rows.map((row) => (
+					<div
+						key={row.id}
+						title={`${formatClockTime(row.startedAt)}–${formatClockTime(row.endedAt)}`}
+						className={cn(
+							"min-w-1 rounded-md transition-opacity hover:opacity-80",
+							row.status === "CONFIRMED"
+								? "bg-primary"
+								: "bg-muted-foreground/40",
+						)}
+						style={{ flex: `${Math.max(row.durationSeconds, 1)} 1 0` }}
+					/>
+				))}
+			</div>
+		</section>
+	);
+}
+
 function ConfidenceBadge({ row }: { row: ActivitySessionRow }) {
 	if (row.status === "CONFIRMED") {
 		return (
@@ -514,6 +562,7 @@ export default function Dashboard({
 			{sessions.isSuccess && rows.length > 0 && (
 				<>
 					<DaySummary rows={rows} />
+					<DayTimeline rows={rows} />
 
 					{selectedIds.size > 0 && (
 						<div
