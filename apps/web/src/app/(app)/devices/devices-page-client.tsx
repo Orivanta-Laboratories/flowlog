@@ -24,6 +24,7 @@ import {
 } from "@flowlog/ui/components/empty";
 import { Input } from "@flowlog/ui/components/input";
 import { Label } from "@flowlog/ui/components/label";
+import { Pagination } from "@flowlog/ui/components/pagination";
 import {
 	Select,
 	SelectContent,
@@ -32,6 +33,14 @@ import {
 	SelectValue,
 } from "@flowlog/ui/components/select";
 import { Skeleton } from "@flowlog/ui/components/skeleton";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@flowlog/ui/components/table";
 import { Copy, Globe, Laptop, MonitorSmartphone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -165,6 +174,7 @@ function CreateDeviceForm({ onIssued }: { onIssued: (token: string) => void }) {
 function DeviceList() {
 	const devices = useDeviceList();
 	const revokeDevice = useRevokeDevice();
+	const [page, setPage] = useState(1);
 
 	if (devices.isPending) {
 		return (
@@ -201,53 +211,81 @@ function DeviceList() {
 		);
 	}
 
+	const pageSize = 8;
+	const pageCount = Math.ceil(devices.data.length / pageSize);
+	const visibleDevices = devices.data.slice(
+		(page - 1) * pageSize,
+		page * pageSize,
+	);
 	return (
-		<ul className="space-y-px overflow-hidden ring-1 ring-border">
-			{devices.data.map((device) => {
-				const isBrowser = device.platform === "CHROME_EXTENSION";
-				const revoked = device.revokedAt !== null;
-				return (
-					<li
-						key={device.id}
-						className="flex flex-wrap items-center gap-3 bg-card px-4 py-3 text-sm"
-					>
-						{isBrowser ? (
-							<Globe
-								className="size-4 shrink-0 text-muted-foreground"
-								aria-hidden="true"
-							/>
-						) : (
-							<Laptop
-								className="size-4 shrink-0 text-muted-foreground"
-								aria-hidden="true"
-							/>
-						)}
-						<div className="min-w-0 flex-1">
-							<p className="truncate font-medium">{device.name}</p>
-							<p className="truncate text-muted-foreground text-xs">
-								{devicePlatformName(device.platform)} ·{" "}
-								<span className="font-mono">{device.tokenPreview}</span>
-							</p>
-						</div>
-						{revoked ? (
-							<Badge variant="destructive">Revoked</Badge>
-						) : (
-							<>
-								<Badge variant="outline">Connected</Badge>
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => revokeDevice.mutate({ id: device.id })}
-									disabled={revokeDevice.isPending}
-								>
-									Revoke
-								</Button>
-							</>
-						)}
-					</li>
-				);
-			})}
-		</ul>
+		<div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead className="px-5">Device</TableHead>
+						<TableHead>Platform</TableHead>
+						<TableHead>Status</TableHead>
+						<TableHead className="text-right">Actions</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{visibleDevices.map((device) => {
+						const isBrowser = device.platform === "CHROME_EXTENSION";
+						const revoked = device.revokedAt !== null;
+						return (
+							<TableRow key={device.id}>
+								<TableCell className="px-5">
+									<div className="flex items-center gap-3">
+										{isBrowser ? (
+											<Globe
+												className="size-4 shrink-0 text-muted-foreground"
+												aria-hidden="true"
+											/>
+										) : (
+											<Laptop
+												className="size-4 shrink-0 text-muted-foreground"
+												aria-hidden="true"
+											/>
+										)}
+										<div className="min-w-0">
+											<p className="truncate font-medium">{device.name}</p>
+										</div>
+									</div>
+								</TableCell>
+								<TableCell>
+									{devicePlatformName(device.platform)}{" "}
+									<span className="font-mono text-muted-foreground text-xs">
+										{device.tokenPreview}
+									</span>
+								</TableCell>
+								<TableCell>
+									{revoked ? (
+										<Badge variant="destructive">Revoked</Badge>
+									) : (
+										<Badge variant="outline">Connected</Badge>
+									)}
+								</TableCell>
+								<TableCell className="text-right">
+									{!revoked && (
+										<>
+											<Button
+												variant="ghost"
+												size="sm"
+												onClick={() => revokeDevice.mutate({ id: device.id })}
+												disabled={revokeDevice.isPending}
+											>
+												Revoke
+											</Button>
+										</>
+									)}
+								</TableCell>
+							</TableRow>
+						);
+					})}
+				</TableBody>
+			</Table>
+			<Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+		</div>
 	);
 }
 

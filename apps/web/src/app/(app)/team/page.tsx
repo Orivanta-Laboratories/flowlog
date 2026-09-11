@@ -21,7 +21,7 @@ export default async function TeamPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-4xl px-4 py-8">
+		<div className="mx-auto max-w-6xl px-6 py-10 lg:px-10">
 			<PageHeader
 				title="Team"
 				description="Everyone in this organization, and how much time they've confirmed."

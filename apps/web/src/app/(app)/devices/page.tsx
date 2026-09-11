@@ -21,7 +21,7 @@ export default async function DevicesPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-3xl px-4 py-8">
+		<div className="mx-auto max-w-5xl px-6 py-10 lg:px-10">
 			<PageHeader
 				title="Devices"
 				description="Each connected device sends activity to your timesheet. Revoke one and it stops immediately."

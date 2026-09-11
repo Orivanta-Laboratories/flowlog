@@ -21,7 +21,7 @@ export default async function ProjectsPage() {
 	}
 
 	return (
-		<div className="mx-auto max-w-4xl px-4 py-8">
+		<div className="mx-auto max-w-6xl px-6 py-10 lg:px-10">
 			<PageHeader
 				title="Projects & rules"
 				description="Projects group your time for billing. Rules label it for you, before AI is ever involved."

@@ -23,6 +23,7 @@ import {
 } from "@flowlog/ui/components/empty";
 import { Input } from "@flowlog/ui/components/input";
 import { Label } from "@flowlog/ui/components/label";
+import { Pagination } from "@flowlog/ui/components/pagination";
 import {
 	Select,
 	SelectContent,
@@ -31,6 +32,14 @@ import {
 	SelectValue,
 } from "@flowlog/ui/components/select";
 import { Skeleton } from "@flowlog/ui/components/skeleton";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@flowlog/ui/components/table";
 import { cn } from "@flowlog/ui/lib/utils";
 import { FolderTree, Wand2 } from "lucide-react";
 import { useState } from "react";
@@ -185,6 +194,7 @@ function CreateProjectForm() {
 function ProjectList() {
 	const projects = useProjectList();
 	const archiveProject = useArchiveProject();
+	const [page, setPage] = useState(1);
 
 	if (projects.isPending) {
 		return (
@@ -221,39 +231,60 @@ function ProjectList() {
 		);
 	}
 
+	const pageSize = 8;
+	const pageCount = Math.ceil(projects.data.length / pageSize);
+	const visibleProjects = projects.data.slice(
+		(page - 1) * pageSize,
+		page * pageSize,
+	);
 	return (
-		<ul className="space-y-px overflow-hidden ring-1 ring-border">
-			{projects.data.map((project) => (
-				<li
-					key={project.id}
-					className="flex flex-wrap items-center gap-3 bg-card px-4 py-3 text-sm"
-				>
-					<span
-						aria-hidden="true"
-						className={cn(
-							"size-2.5 shrink-0 rounded-full",
-							projectColorSwatchClass(project.color),
-						)}
-					/>
-					<div className="min-w-0 flex-1">
-						<p className="truncate font-medium">{project.name}</p>
-						<p className="truncate text-muted-foreground text-xs">
-							{project.clientName ?? "No client"}
-							{project.billingRateCents !== null &&
-								` · ${centsToDollarsLabel(project.billingRateCents)} per hour`}
-						</p>
-					</div>
-					<Button
-						variant="ghost"
-						size="sm"
-						onClick={() => archiveProject.mutate({ id: project.id })}
-						disabled={archiveProject.isPending}
-					>
-						Archive
-					</Button>
-				</li>
-			))}
-		</ul>
+		<div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead className="px-5">Project</TableHead>
+						<TableHead>Client</TableHead>
+						<TableHead>Rate</TableHead>
+						<TableHead className="text-right">Actions</TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{visibleProjects.map((project) => (
+						<TableRow key={project.id}>
+							<TableCell className="px-5">
+								<span
+									aria-hidden="true"
+									className={cn(
+										"size-2.5 shrink-0 rounded-full",
+										projectColorSwatchClass(project.color),
+									)}
+								/>
+								<div className="min-w-0 flex-1">
+									<p className="truncate font-medium">{project.name}</p>
+								</div>
+							</TableCell>
+							<TableCell>{project.clientName ?? "No client"}</TableCell>
+							<TableCell>
+								{project.billingRateCents === null
+									? "—"
+									: `${centsToDollarsLabel(project.billingRateCents)}/hr`}
+							</TableCell>
+							<TableCell className="text-right">
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => archiveProject.mutate({ id: project.id })}
+									disabled={archiveProject.isPending}
+								>
+									Archive
+								</Button>
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+			<Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
+		</div>
 	);
 }
 

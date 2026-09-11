@@ -19,6 +19,7 @@ import {
 } from "@flowlog/ui/components/empty";
 import { Input } from "@flowlog/ui/components/input";
 import { Label } from "@flowlog/ui/components/label";
+import { Pagination } from "@flowlog/ui/components/pagination";
 import { Skeleton } from "@flowlog/ui/components/skeleton";
 import {
 	Table,
@@ -167,6 +168,7 @@ function PendingInvitations({
 
 function MembersTable() {
 	const trackedTime = useOrganizationTrackedTime(TRACKED_TIME_DAYS);
+	const [page, setPage] = React.useState(1);
 
 	if (trackedTime.isPending) {
 		return (
@@ -202,8 +204,14 @@ function MembersTable() {
 		);
 	}
 
+	const pageSize = 8;
+	const pageCount = Math.ceil(trackedTime.data.length / pageSize);
+	const members = trackedTime.data.slice(
+		(page - 1) * pageSize,
+		page * pageSize,
+	);
 	return (
-		<div className="overflow-hidden ring-1 ring-border">
+		<div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
 			<Table>
 				<TableHeader>
 					<TableRow className="bg-muted/50">
@@ -216,7 +224,7 @@ function MembersTable() {
 					</TableRow>
 				</TableHeader>
 				<TableBody>
-					{trackedTime.data.map((member) => (
+					{members.map((member) => (
 						<TableRow key={member.memberId}>
 							<TableCell className="px-4">
 								<p className="font-medium">{member.name}</p>
@@ -245,6 +253,7 @@ function MembersTable() {
 					))}
 				</TableBody>
 			</Table>
+			<Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
 		</div>
 	);
 }
