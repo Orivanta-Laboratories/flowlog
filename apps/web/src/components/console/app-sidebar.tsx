@@ -92,10 +92,8 @@ export function AppSidebar() {
 				>
 					<span
 						aria-hidden="true"
-						className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary font-semibold text-[11px] text-primary-foreground"
-					>
-						FL
-					</span>
+						className="h-1.5 w-7 shrink-0 rounded-full bg-primary"
+					/>
 					<span className="cn-font-heading truncate font-semibold text-sm group-data-[collapsible=icon]:hidden">
 						Flowlog
 					</span>
@@ -117,7 +115,7 @@ export function AppSidebar() {
 											<SidebarMenuButton
 												isActive={isActive}
 												tooltip={item.label}
-												className="h-auto rounded-lg py-3"
+												className="h-auto rounded-md py-3"
 												render={
 													<Link
 														href={item.href}
@@ -145,7 +143,7 @@ export function AppSidebar() {
 			</SidebarContent>
 
 			<SidebarFooter className="border-t">
-				<p className="px-2 pb-1 text-muted-foreground text-xs group-data-[collapsible=icon]:hidden">
+				<p className="px-2 pb-1 text-muted-foreground text-xs leading-relaxed group-data-[collapsible=icon]:hidden">
 					Flowlog suggests. You confirm.
 				</p>
 				<UserCard />

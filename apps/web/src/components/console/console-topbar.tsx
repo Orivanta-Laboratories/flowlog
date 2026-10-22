@@ -19,10 +19,10 @@ export function ConsoleTopbar() {
 	const title = PAGE_TITLES[pathname] ?? "Console";
 
 	return (
-		<header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/80">
+		<header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-card/95 px-4 backdrop-blur supports-backdrop-filter:bg-card/80">
 			<SidebarTrigger />
 			<Separator orientation="vertical" className="mx-1 h-4" />
-			<span className="cn-font-heading truncate font-medium text-sm">
+			<span className="cn-font-heading truncate font-semibold text-sm">
 				{title}
 			</span>
 		</header>

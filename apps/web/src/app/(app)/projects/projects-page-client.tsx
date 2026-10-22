@@ -238,7 +238,7 @@ function ProjectList() {
 		page * pageSize,
 	);
 	return (
-		<div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
+		<div className="overflow-hidden rounded-lg border bg-card shadow-xs">
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -497,7 +497,7 @@ function MatchingRuleList() {
 	}
 
 	return (
-		<ul className="space-y-px overflow-hidden ring-1 ring-border">
+		<ul className="grid gap-px overflow-hidden rounded-lg border bg-border">
 			{rules.data.map((rule) => (
 				<li
 					key={rule.id}
@@ -535,7 +535,9 @@ export default function ProjectsPageClient() {
 	return (
 		<div className="grid gap-8">
 			<section>
-				<h2 className="cn-font-heading mb-1 font-medium text-base">Projects</h2>
+				<h2 className="cn-font-heading mb-1 font-semibold text-base">
+					Projects
+				</h2>
 				<p className="mb-4 max-w-prose text-muted-foreground text-sm">
 					Projects group confirmed time for billing. Archiving one keeps its
 					history intact.
@@ -545,7 +547,7 @@ export default function ProjectsPageClient() {
 			</section>
 
 			<section>
-				<h2 className="cn-font-heading mb-1 font-medium text-base">
+				<h2 className="cn-font-heading mb-1 font-semibold text-base">
 					Matching rules
 				</h2>
 				<p className="mb-4 max-w-prose text-muted-foreground text-sm">

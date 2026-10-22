@@ -136,10 +136,10 @@ function PendingInvitations({
 
 	return (
 		<section>
-			<h2 className="cn-font-heading mb-3 font-medium text-base">
+			<h2 className="cn-font-heading mb-3 font-semibold text-base">
 				Pending invitations
 			</h2>
-			<ul className="space-y-px overflow-hidden ring-1 ring-border">
+			<ul className="grid gap-px overflow-hidden rounded-lg border bg-border">
 				{pending.map((invitation) => (
 					<li
 						key={invitation.id}
@@ -211,7 +211,7 @@ function MembersTable() {
 		page * pageSize,
 	);
 	return (
-		<div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
+		<div className="overflow-hidden rounded-lg border bg-card shadow-xs">
 			<Table>
 				<TableHeader>
 					<TableRow className="bg-muted/50">

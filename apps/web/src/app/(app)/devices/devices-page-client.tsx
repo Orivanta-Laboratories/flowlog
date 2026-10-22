@@ -218,7 +218,7 @@ function DeviceList() {
 		page * pageSize,
 	);
 	return (
-		<div className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
+		<div className="overflow-hidden rounded-lg border bg-card shadow-xs">
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -267,16 +267,14 @@ function DeviceList() {
 								</TableCell>
 								<TableCell className="text-right">
 									{!revoked && (
-										<>
-											<Button
-												variant="ghost"
-												size="sm"
-												onClick={() => revokeDevice.mutate({ id: device.id })}
-												disabled={revokeDevice.isPending}
-											>
-												Revoke
-											</Button>
-										</>
+										<Button
+											variant="ghost"
+											size="sm"
+											onClick={() => revokeDevice.mutate({ id: device.id })}
+											disabled={revokeDevice.isPending}
+										>
+											Revoke
+										</Button>
 									)}
 								</TableCell>
 							</TableRow>

@@ -29,10 +29,8 @@ export default function LoginLayout({
 					>
 						<span
 							aria-hidden="true"
-							className="flex size-6 items-center justify-center rounded-md bg-primary font-semibold text-[11px] text-primary-foreground"
-						>
-							FL
-						</span>
+							className="h-1.5 w-7 rounded-full bg-primary"
+						/>
 						Flowlog
 					</Link>
 					<ModeToggle />
@@ -42,7 +40,7 @@ export default function LoginLayout({
 				</main>
 			</div>
 
-			<aside className="hidden flex-col justify-between border-l bg-muted/40 px-12 py-16 lg:flex">
+			<aside className="hidden flex-col justify-between border-l bg-linear-to-t from-primary/6 to-card px-12 py-16 lg:flex dark:from-card">
 				<p className="cn-font-heading max-w-md text-balance font-semibold text-3xl">
 					Finish work. Your timesheet is already started.
 				</p>

@@ -100,7 +100,7 @@ function DaySummary({ rows }: { rows: ActivitySessionRow[] }) {
 			{stats.map((stat) => (
 				<div
 					key={stat.label}
-					className="rounded-xl bg-card px-5 py-5 shadow-sm ring-1 ring-foreground/10"
+					className="rounded-lg border bg-linear-to-t from-primary/4 to-card px-5 py-5 shadow-xs dark:from-card"
 				>
 					<dt className="font-medium text-muted-foreground text-sm">
 						{stat.label}
@@ -118,7 +118,7 @@ function DayTimeline({ rows }: { rows: ActivitySessionRow[] }) {
 	const total = rows.reduce((sum, row) => sum + row.durationSeconds, 0);
 	if (total === 0) return null;
 	return (
-		<section className="mb-8 rounded-xl bg-card p-5 shadow-sm ring-1 ring-foreground/10">
+		<section className="mb-8 rounded-lg border bg-card p-5 shadow-xs">
 			<div className="mb-4 flex items-center justify-between gap-3">
 				<div>
 					<h2 className="cn-font-heading font-semibold text-base">
@@ -524,7 +524,7 @@ export default function Dashboard({
 
 			{sessions.isPending && (
 				<div
-					className="space-y-px"
+					className="grid gap-px"
 					role="status"
 					aria-busy="true"
 					aria-label="Loading your day"
@@ -591,7 +591,7 @@ export default function Dashboard({
 						</div>
 					)}
 
-					<ul className="overflow-hidden rounded-xl bg-card shadow-sm ring-1 ring-foreground/10">
+					<ul className="overflow-hidden rounded-lg border bg-card shadow-xs">
 						{rows.map((row) => (
 							<ReviewRow
 								key={row.id}

@@ -34,10 +34,8 @@ export default function MarketingHeader() {
 				>
 					<span
 						aria-hidden="true"
-						className="flex size-6 items-center justify-center rounded-md bg-primary font-semibold text-[11px] text-primary-foreground"
-					>
-						FL
-					</span>
+						className="h-1.5 w-7 rounded-full bg-primary"
+					/>
 					Flowlog
 				</Link>
 

@@ -25,14 +25,16 @@ export default async function AppLayout({
 				Skip to content
 			</a>
 			<AppSidebar />
-			<SidebarInset className="flex min-h-svh min-w-0 flex-col">
+			<SidebarInset className="flex min-h-svh min-w-0 flex-col bg-background">
 				<ConsoleTopbar />
 				<div
 					id="console-main"
 					tabIndex={-1}
 					className="min-h-0 flex-1 outline-none"
 				>
-					{children}
+					<div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+						{children}
+					</div>
 				</div>
 			</SidebarInset>
 		</SidebarProvider>

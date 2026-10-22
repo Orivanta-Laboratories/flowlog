@@ -30,7 +30,7 @@ export default async function DeviceConnectPage({
 	}
 
 	return (
-		<div className="mx-auto max-w-lg px-4 py-8">
+		<div className="mx-auto max-w-lg">
 			<PageHeader title="Connect a device" />
 			{pairingId ? (
 				<DeviceConnectPageClient pairingId={pairingId} />

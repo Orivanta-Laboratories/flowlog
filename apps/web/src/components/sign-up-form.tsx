@@ -57,7 +57,7 @@ export default function SignUpForm({
 	}
 
 	return (
-		<Card className="w-full max-w-md rounded-2xl">
+		<Card className="w-full max-w-md">
 			<CardContent className="p-8">
 				<h1 className="mb-1 font-semibold text-2xl tracking-tight">
 					Create your account
@@ -72,11 +72,11 @@ export default function SignUpForm({
 						e.stopPropagation();
 						form.handleSubmit();
 					}}
-					className="space-y-4"
+					className="grid gap-4"
 				>
 					<form.Field name="name">
 						{(field) => (
-							<div className="space-y-2">
+							<div className="grid gap-2">
 								<Label htmlFor={field.name}>Name</Label>
 								<Input
 									id={field.name}
@@ -97,7 +97,7 @@ export default function SignUpForm({
 
 					<form.Field name="email">
 						{(field) => (
-							<div className="space-y-2">
+							<div className="grid gap-2">
 								<Label htmlFor={field.name}>Email</Label>
 								<Input
 									id={field.name}
@@ -119,7 +119,7 @@ export default function SignUpForm({
 
 					<form.Field name="password">
 						{(field) => (
-							<div className="space-y-2">
+							<div className="grid gap-2">
 								<Label htmlFor={field.name}>Password</Label>
 								<Input
 									id={field.name}

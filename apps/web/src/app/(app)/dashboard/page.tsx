@@ -27,7 +27,7 @@ export default async function DashboardPage() {
 	const firstName = session.user.name.split(" ")[0] ?? session.user.name;
 
 	return (
-		<div className="mx-auto max-w-6xl px-6 py-10 lg:px-10">
+		<div className="mx-auto max-w-6xl">
 			<PageHeader
 				title={`Your day, ${firstName}`}
 				description="Read the draft Flowlog put together, fix what's wrong, and confirm the blocks you're happy with."
